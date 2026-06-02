@@ -1,0 +1,248 @@
+export const instructors = [
+  {
+    slug: "sarah-m-footscray",
+    name: "Sarah M.",
+    suburb: "Footscray",
+    state: "VIC",
+    distance: "2.4 km",
+    rating: "4.9",
+    reviews: "42",
+    transmission: "Auto",
+    verified: true,
+    anxietyFriendly: true,
+    internationalLicence: true,
+    rate: "$75/hr",
+    packagePrice: "$350 for 5 hrs",
+    packageOptions: ["5 hour pack: $350", "10 hour pack: $680"],
+    lessonDuration: "60 minutes",
+    experience: "8 years",
+    language: "English, Hindi",
+    testCentre: "Sunshine, Moorabbin",
+    serviceAreas: ["Footscray", "Sunshine", "Yarraville", "Seddon", "West Footscray"],
+    availability: ["Monday", "Tuesday", "Thursday", "Saturday"],
+    vehicle: {
+      make: "Toyota",
+      model: "Corolla Hybrid",
+      year: "2021",
+      transmission: "Automatic",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-10291",
+    description:
+      "Sarah M. is a calm and patient driving instructor based in Footscray. She supports nervous learners, new drivers, and international licence conversion students with clear, confidence-building lessons.",
+    reviewBreakdown: {
+      patience: "4.9",
+      communication: "4.8",
+      value: "4.7",
+      punctuality: "4.8"
+    },
+    sampleReview:
+      "Very patient and clear during lessons. Helped me feel confident before my test.",
+    passOutcome: "Passed first attempt"
+  },
+  {
+    slug: "james-r-sunshine",
+    name: "James R.",
+    suburb: "Sunshine",
+    state: "VIC",
+    distance: "4.8 km",
+    rating: "4.7",
+    reviews: "31",
+    transmission: "Manual",
+    verified: true,
+    anxietyFriendly: false,
+    internationalLicence: true,
+    rate: "$70/hr",
+    packagePrice: "$330 for 5 hrs",
+    packageOptions: ["5 hour pack: $330", "10 hour pack: $640"],
+    lessonDuration: "60 minutes",
+    experience: "10 years",
+    language: "English",
+    testCentre: "Sunshine, Melton",
+    serviceAreas: ["Sunshine", "Albion", "St Albans", "Braybrook"],
+    availability: ["Monday", "Wednesday", "Friday", "Sunday"],
+    vehicle: {
+      make: "Mazda",
+      model: "3 Manual",
+      year: "2020",
+      transmission: "Manual",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-11842",
+    description:
+      "James R. provides structured manual driving lessons for learners preparing for Victorian driving tests around Sunshine. He focuses on clutch control, road awareness, and safe driving habits.",
+    reviewBreakdown: {
+      patience: "4.6",
+      communication: "4.7",
+      value: "4.8",
+      punctuality: "4.6"
+    },
+    sampleReview:
+      "James explained manual driving very clearly and helped me improve my confidence.",
+    passOutcome: "Passed after retries"
+  },
+  {
+    slug: "priya-k-werribee",
+    name: "Priya K.",
+    suburb: "Werribee",
+    state: "VIC",
+    distance: "8.2 km",
+    rating: "4.8",
+    reviews: "28",
+    transmission: "Both",
+    verified: false,
+    anxietyFriendly: true,
+    internationalLicence: false,
+    rate: "$80/hr",
+    packagePrice: "$380 for 5 hrs",
+    packageOptions: ["5 hour pack: $380", "10 hour pack: $740"],
+    lessonDuration: "60 or 90 minutes",
+    experience: "6 years",
+    language: "English, Tamil, Hindi",
+    testCentre: "Werribee",
+    serviceAreas: ["Werribee", "Hoppers Crossing", "Point Cook"],
+    availability: ["Tuesday", "Thursday", "Saturday"],
+    vehicle: {
+      make: "Hyundai",
+      model: "i30",
+      year: "2022",
+      transmission: "Automatic and Manual",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-14327",
+    description:
+      "Priya K. focuses on patient, calm lessons for learners who want automatic, manual, or mixed driving practice around Werribee.",
+    reviewBreakdown: {
+      patience: "4.9",
+      communication: "4.7",
+      value: "4.6",
+      punctuality: "4.8"
+    },
+    sampleReview:
+      "Priya made every lesson easy to understand and helped me stay calm.",
+    passOutcome: "Still learning"
+  },
+  {
+    slug: "ahmed-s-point-cook",
+    name: "Ahmed S.",
+    suburb: "Point Cook",
+    state: "VIC",
+    distance: "9.5 km",
+    rating: "4.9",
+    reviews: "36",
+    transmission: "Auto",
+    verified: true,
+    anxietyFriendly: true,
+    internationalLicence: true,
+    rate: "$78/hr",
+    packagePrice: "$360 for 5 hrs",
+    packageOptions: ["5 hour pack: $360", "10 hour pack: $710"],
+    lessonDuration: "60 minutes",
+    experience: "9 years",
+    language: "English, Arabic",
+    testCentre: "Werribee, Sunshine",
+    serviceAreas: ["Point Cook", "Werribee", "Hoppers Crossing", "Williams Landing"],
+    availability: ["Monday", "Wednesday", "Saturday"],
+    vehicle: {
+      make: "Kia",
+      model: "Cerato",
+      year: "2021",
+      transmission: "Automatic",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-13209",
+    description:
+      "Ahmed S. supports learners and international licence conversion drivers with calm, structured lessons around Point Cook.",
+    reviewBreakdown: {
+      patience: "4.8",
+      communication: "4.7",
+      value: "4.6",
+      punctuality: "4.7"
+    },
+    sampleReview:
+      "Ahmed was calm and practical. His route guidance helped a lot before the test.",
+    passOutcome: "Passed first attempt"
+  },
+  {
+    slug: "linda-t-preston",
+    name: "Linda T.",
+    suburb: "Preston",
+    state: "VIC",
+    distance: "11.3 km",
+    rating: "4.8",
+    reviews: "47",
+    transmission: "Auto",
+    verified: true,
+    anxietyFriendly: true,
+    internationalLicence: false,
+    rate: "$76/hr",
+    packagePrice: "$355 for 5 hrs",
+    packageOptions: ["5 hour pack: $355", "10 hour pack: $695"],
+    lessonDuration: "60 minutes",
+    experience: "7 years",
+    language: "English, Mandarin",
+    testCentre: "Carlton, Bundoora",
+    serviceAreas: ["Preston", "Coburg", "Thornbury", "Bundoora"],
+    availability: ["Tuesday", "Wednesday", "Friday", "Saturday"],
+    vehicle: {
+      make: "Honda",
+      model: "Civic",
+      year: "2022",
+      transmission: "Automatic",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-15116",
+    description:
+      "Linda T. offers patient automatic lessons for new drivers and nervous learners around Preston and nearby suburbs.",
+    reviewBreakdown: {
+      patience: "5.0",
+      communication: "4.9",
+      value: "4.8",
+      punctuality: "4.9"
+    },
+    sampleReview:
+      "Linda is very patient and professional. I felt comfortable from the first lesson.",
+    passOutcome: "Passed first attempt"
+  },
+  {
+    slug: "mark-d-epping",
+    name: "Mark D.",
+    suburb: "Epping",
+    state: "VIC",
+    distance: "13.7 km",
+    rating: "4.6",
+    reviews: "24",
+    transmission: "Manual",
+    verified: false,
+    anxietyFriendly: false,
+    internationalLicence: true,
+    rate: "$72/hr",
+    packagePrice: "$340 for 5 hrs",
+    packageOptions: ["5 hour pack: $340", "10 hour pack: $660"],
+    lessonDuration: "60 minutes",
+    experience: "12 years",
+    language: "English",
+    testCentre: "Broadmeadows, Bundoora",
+    serviceAreas: ["Epping", "Thomastown", "Bundoora", "Mill Park"],
+    availability: ["Monday", "Thursday", "Sunday"],
+    vehicle: {
+      make: "Ford",
+      model: "Focus Manual",
+      year: "2019",
+      transmission: "Manual",
+      dualControls: "Yes"
+    },
+    adiRegistration: "ADI-VIC-12671",
+    description:
+      "Mark D. provides practical manual lessons for learners preparing for test routes around Epping and Broadmeadows.",
+    reviewBreakdown: {
+      patience: "4.4",
+      communication: "4.5",
+      value: "4.6",
+      punctuality: "4.4"
+    },
+    sampleReview:
+      "Mark helped me understand manual control and test preparation clearly.",
+    passOutcome: "Test not taken yet"
+  }
+];
