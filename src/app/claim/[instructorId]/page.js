@@ -55,6 +55,7 @@ export default function ClaimProfilePage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("idle");
 
   function updateField(field, value) {
     setFormData((previous) => ({
@@ -63,9 +64,31 @@ export default function ClaimProfilePage() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+    setSubmitStatus("loading");
+
+    try {
+      const response = await fetch("/api/claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          instructorId,
+          ...formData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Claim submission failed");
+      }
+
+      setSubmitted(true);
+      setSubmitStatus("success");
+    } catch {
+      setSubmitStatus("error");
+    }
   }
 
   if (!instructor) {
@@ -228,10 +251,20 @@ export default function ClaimProfilePage() {
 
                       <button
                         type="submit"
-                        className="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+                        disabled={submitStatus === "loading"}
+                        className="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Submit Claim Request
+                        {submitStatus === "loading"
+                          ? "Submitting..."
+                          : "Submit Claim Request"}
                       </button>
+
+                      {submitStatus === "error" && (
+                        <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+                          The claim request could not be submitted. Please try
+                          again.
+                        </p>
+                      )}
                     </form>
                   )}
 
@@ -242,8 +275,8 @@ export default function ClaimProfilePage() {
                       </h2>
 
                       <p className="mt-3 text-green-700">
-                        Your request has been received. The admin will review
-                        your ADI registration details before approving the
+                        Your request has been received. Admin will manually
+                        review your ADI registration number before approving the
                         profile claim.
                       </p>
 

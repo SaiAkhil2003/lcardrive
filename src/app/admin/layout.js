@@ -2,6 +2,10 @@ import Link from "next/link";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 
 export default function AdminLayout({ children }) {
+  const hasClerkConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY
+  );
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b bg-white">
@@ -21,7 +25,15 @@ export default function AdminLayout({ children }) {
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 lg:flex-row">
         <AdminSidebar />
-        <section className="min-w-0 flex-1">{children}</section>
+        <section className="min-w-0 flex-1 space-y-6">
+          {!hasClerkConfigured && (
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
+              Clerk setup required before admin routes are protected in
+              production.
+            </div>
+          )}
+          {children}
+        </section>
       </div>
     </main>
   );

@@ -10,7 +10,7 @@ export default function ProfileCompletenessBar({ value = 0 }) {
           </h2>
 
           <p className="mt-1 text-sm text-slate-600">
-            Complete profiles rank higher in search results
+            Complete profiles rank higher in search results.
           </p>
         </div>
 

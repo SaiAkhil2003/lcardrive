@@ -22,7 +22,7 @@ export default function PortalServiceAreasPage() {
       <ProfileCompletenessBar value={86} />
 
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold">Current service areas</h2>
+        <h2 className="text-xl font-bold">Service suburb tag input</h2>
 
         <div className="mt-5 flex flex-wrap gap-3">
           {instructor.serviceAreas.map((area) => (
@@ -37,7 +37,7 @@ export default function PortalServiceAreasPage() {
 
         <div className="mt-6 grid gap-4 md:grid-cols-[1fr_auto]">
           <input
-            placeholder="Add suburb or postcode"
+            placeholder="Add suburb tag"
             className="rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
           />
 
@@ -45,7 +45,7 @@ export default function PortalServiceAreasPage() {
             type="button"
             className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
           >
-            Add area placeholder
+            Add suburb
           </button>
         </div>
       </section>
@@ -53,10 +53,31 @@ export default function PortalServiceAreasPage() {
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-xl font-bold">Familiar test centres</h2>
 
-        <input
-          defaultValue={instructor.testCentre}
-          className="mt-5 w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
-        />
+        <select
+          multiple
+          defaultValue={instructor.testCentre.split(", ")}
+          className="mt-5 min-h-40 w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+        >
+          {[
+            "Sunshine",
+            "Werribee",
+            "Moorabbin",
+            "Bundoora",
+            "Broadmeadows",
+            "Carlton"
+          ].map((centre) => (
+            <option key={centre} value={centre}>
+              {centre}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+        >
+          Save service areas
+        </button>
       </section>
     </div>
   );

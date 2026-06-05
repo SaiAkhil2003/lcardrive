@@ -27,18 +27,7 @@ export default function PortalSidebar() {
 
   return (
     <aside className="h-fit rounded-2xl border bg-white p-4 shadow-sm lg:w-64">
-      <Link
-        href="/portal"
-        className={
-          pathname === "/portal"
-            ? "block rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
-            : "block rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        }
-      >
-        Portal Home
-      </Link>
-
-      <nav className="mt-3 space-y-2">
+      <nav className="space-y-2">
         {navItems.map((item) => (
           <Link
             key={item.href}

@@ -1,0 +1,4 @@
+first_name,last_name,suburb,postcode,state,phone,adi_registration,licence_types,transmission,is_sample,source_notes
+Sample,Instructor One,Footscray,3011,VIC,0400000000,SAMPLE-ADI-0001,Car,Auto,true,Sample placeholder only - replace before production
+Sample,Instructor Two,Sunshine,3020,VIC,0400000001,SAMPLE-ADI-0002,Car,Manual,true,Sample placeholder only - replace before production
+Sample,Instructor Three,Werribee,3030,VIC,0400000002,SAMPLE-ADI-0003,Car,Both,true,Sample placeholder only - replace before production

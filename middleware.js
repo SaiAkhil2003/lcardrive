@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { hasAdminRole } from "@/lib/auth/adminRole";
+import { isAdmin } from "@/lib/auth/roles";
 
 const isPortalRoute = createRouteMatcher(["/portal(.*)"]);
 const isClaimRoute = createRouteMatcher(["/claim(.*)"]);
@@ -17,7 +17,7 @@ const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
   if (isAdminRoute(request)) {
     const authObject = await auth.protect();
 
-    if (!hasAdminRole(authObject.sessionClaims)) {
+    if (!isAdmin({ sessionClaims: authObject.sessionClaims, ...authObject.sessionClaims })) {
       return new NextResponse("Forbidden: LCarDrive admin role required.", {
         status: 403
       });
@@ -26,8 +26,12 @@ const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
-  if (isPortalRoute(request) || isClaimRoute(request)) {
+  if (isPortalRoute(request)) {
     await auth.protect();
+  }
+
+  if (isClaimRoute(request)) {
+    return NextResponse.next();
   }
 
   return NextResponse.next();

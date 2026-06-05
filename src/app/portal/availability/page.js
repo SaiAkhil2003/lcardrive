@@ -24,8 +24,7 @@ export default function PortalAvailabilityPage() {
         <h1 className="mt-2 text-3xl font-bold">Weekly availability</h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          Mark the days you usually teach. This is not a booking calendar and
-          does not create live lesson slots.
+          This is self-reported availability, not a live booking calendar.
         </p>
       </section>
 

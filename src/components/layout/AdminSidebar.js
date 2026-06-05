@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  { href: "/admin", label: "Dashboard" },
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/claims", label: "Claims" },
-  { href: "/admin/import", label: "Import" },
+  { href: "/admin/import", label: "CSV Import" },
   { href: "/admin/reviews", label: "Reviews" },
   { href: "/admin/stats", label: "Stats" }
 ];
@@ -24,18 +25,7 @@ export default function AdminSidebar() {
 
   return (
     <aside className="h-fit rounded-2xl border bg-white p-4 shadow-sm lg:w-64">
-      <Link
-        href="/admin"
-        className={
-          pathname === "/admin"
-            ? "block rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
-            : "block rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        }
-      >
-        Admin Home
-      </Link>
-
-      <nav className="mt-3 space-y-2">
+      <nav className="space-y-2">
         {navItems.map((item) => (
           <Link
             key={item.href}

@@ -3,10 +3,10 @@ import { pendingClaims } from "@/data/adminPlaceholders";
 
 function getClaimStatus(instructor) {
   if (pendingClaims.some((claim) => claim.instructorSlug === instructor.slug)) {
-    return "Pending claim";
+    return "Pending";
   }
 
-  return instructor.verified ? "Claimed" : "Unclaimed";
+  return instructor.verified ? "Verified" : "Unclaimed";
 }
 
 export default function AdminListingsPage() {
@@ -26,12 +26,14 @@ export default function AdminListingsPage() {
 
       <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="px-5 py-4 font-semibold">Name</th>
                 <th className="px-5 py-4 font-semibold">Suburb</th>
                 <th className="px-5 py-4 font-semibold">Claim status</th>
+                <th className="px-5 py-4 font-semibold">Hourly rate</th>
+                <th className="px-5 py-4 font-semibold">Rating</th>
                 <th className="px-5 py-4 font-semibold">Action</th>
               </tr>
             </thead>
@@ -47,6 +49,10 @@ export default function AdminListingsPage() {
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                       {getClaimStatus(instructor)}
                     </span>
+                  </td>
+                  <td className="px-5 py-4 font-semibold">{instructor.rate}</td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {instructor.rating}
                   </td>
                   <td className="px-5 py-4">
                     <button

@@ -5,7 +5,7 @@ export default function AdminStatsPage() {
   const stats = [
     { label: "Total instructors", value: instructors.length },
     { label: "Pending claims", value: pendingClaims.length },
-    { label: "Reviews", value: reviewQueue.length },
+    { label: "Review count", value: reviewQueue.length },
     { label: "Searches today", value: 131 }
   ];
 
@@ -36,18 +36,25 @@ export default function AdminStatsPage() {
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-xl font-bold">Top suburbs</h2>
 
-        <div className="mt-5 space-y-3">
-          {topSuburbs.map((item) => (
-            <div
-              key={item.suburb}
-              className="flex items-center justify-between rounded-xl bg-slate-50 p-4"
-            >
-              <span className="font-semibold">{item.suburb}</span>
-              <span className="text-sm text-slate-600">
-                {item.searches} searches
-              </span>
-            </div>
-          ))}
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[420px] text-left text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Suburb</th>
+                <th className="px-4 py-3 font-semibold">Searches today</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {topSuburbs.map((item) => (
+                <tr key={item.suburb}>
+                  <td className="px-4 py-3 font-semibold">{item.suburb}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {item.searches}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

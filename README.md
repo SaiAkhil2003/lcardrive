@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LCarDrive
 
-## Getting Started
+Next.js 14 App Router MVP foundation for LCarDrive.
 
-First, run the development server:
+## Local Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Use `http://localhost:3000` for local development.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Copy `.env.example` into your local environment and fill only real service keys
+owned by the project. Do not commit real API keys.
 
-## Learn More
+Required production services:
 
-To learn more about Next.js, take a look at the following resources:
+- Clerk publishable and secret keys
+- Supabase URL, anon key, and service role key
+- Anthropic API key for AI matching and bio generation
+- Resend API key plus verified sender/recipient configuration for contact email
+- Google Maps API key for future geocoding and geo search
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Google OAuth must be enabled in the Clerk Dashboard under authentication
+settings. Do not hardcode Google OAuth keys in the app.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Data
 
-## Deploy on Vercel
+The checked-in instructor rows are sample placeholders for Phase 1 development.
+Production launch requires 80 to 120 real seeded listings from VicRoads ADI
+register, Google Maps, instructor websites, and Facebook pages.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Phase 1 Scope
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+This foundation includes public search, instructor profiles, profile claims,
+Clerk auth scaffolding, instructor portal UI, admin UI, Supabase migrations,
+safe API fallbacks, sitemap, robots, and profile JSON-LD.
+
+Out of scope for Phase 1: booking, payments, Stripe, learner accounts, in-app
+chat or SMS messaging, native mobile app, paid featured listings, AI natural
+language search, AI pricing intelligence, and listing flag/report queues.

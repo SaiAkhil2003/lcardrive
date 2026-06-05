@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { instructors } from "@/data/instructors";
-import { pendingClaims, reviewQueue, topSuburbs } from "@/data/adminPlaceholders";
+import { pendingClaims, reviewQueue } from "@/data/adminPlaceholders";
 import { clerkAdminRoleSetup } from "@/lib/auth/adminRole";
 
 export default function AdminHomePage() {
   const stats = [
     { label: "Total instructors", value: instructors.length },
     { label: "Pending claims", value: pendingClaims.length },
-    { label: "Reviews", value: reviewQueue.length },
-    { label: "Top suburbs", value: topSuburbs.length },
+    { label: "Pending reviews", value: reviewQueue.length },
     { label: "Searches today", value: 131 }
   ];
 
@@ -33,7 +32,7 @@ export default function AdminHomePage() {
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <div key={item.label} className="rounded-2xl border bg-white p-5 shadow-sm">
             <p className="text-sm font-semibold text-slate-500">{item.label}</p>

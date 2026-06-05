@@ -12,45 +12,58 @@ export default function AdminClaimsPage() {
 
         <p className="mt-3 max-w-2xl text-slate-600">
           Review ADI registration numbers submitted after a Clerk sign-up flow.
-          Approve and reject actions are UI-only placeholders.
+          Approve and reject actions are UI-only when Supabase is not connected.
         </p>
       </section>
 
-      <section className="space-y-4">
-        {pendingClaims.map((claim) => (
-          <div
-            key={claim.id}
-            className="rounded-2xl border bg-white p-5 shadow-sm"
-          >
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-bold">{claim.instructorName}</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  {claim.suburb} submitted by {claim.submittedBy}
-                </p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">
-                  ADI number submitted: {claim.adiNumber}
-                </p>
-              </div>
+      <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="px-5 py-4 font-semibold">Instructor name</th>
+                <th className="px-5 py-4 font-semibold">Submitted full name</th>
+                <th className="px-5 py-4 font-semibold">Email</th>
+                <th className="px-5 py-4 font-semibold">Phone</th>
+                <th className="px-5 py-4 font-semibold">ADI number</th>
+                <th className="px-5 py-4 font-semibold">Actions</th>
+              </tr>
+            </thead>
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Approve
-                </button>
+            <tbody className="divide-y">
+              {pendingClaims.map((claim) => (
+                <tr key={claim.id}>
+                  <td className="px-5 py-4 font-semibold">
+                    {claim.instructorName}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {claim.submittedFullName}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">{claim.email}</td>
+                  <td className="px-5 py-4 text-slate-600">{claim.phone}</td>
+                  <td className="px-5 py-4 font-semibold">{claim.adiNumber}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
+                      >
+                        Approve
+                      </button>
 
-                <button
-                  type="button"
-                  className="rounded-xl border px-5 py-3 text-sm font-semibold text-slate-700 hover:border-red-600 hover:text-red-700"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+                      <button
+                        type="button"
+                        className="rounded-xl border px-4 py-2 font-semibold text-slate-700 hover:border-red-600 hover:text-red-700"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
