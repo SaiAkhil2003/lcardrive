@@ -46,5 +46,11 @@ export default function middleware(request, event) {
 }
 
 export const config = {
-  matcher: ["/portal/:path*", "/admin/:path*", "/claim/:path*"]
+  matcher: [
+    "/portal/:path*",
+    "/admin/:path*",
+    "/claim/:path*",
+    "/api/ai/bio",
+    "/api/claims"
+  ]
 };
