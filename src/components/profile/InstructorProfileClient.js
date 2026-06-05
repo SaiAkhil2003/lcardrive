@@ -587,20 +587,18 @@ export default function InstructorProfileClient({ instructor }) {
                 Contact Instructor
               </button>
 
-              {isUnclaimed && (
-                <Link
-                  href={`/claim/${instructor.slug}`}
-                  className="mt-3 block w-full rounded-xl border px-5 py-3 text-center font-semibold text-slate-700 hover:border-blue-600 hover:text-blue-700"
-                >
-                  Claim this Profile
-                </Link>
-              )}
-
               {!isUnclaimed && (
                 <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
                   Claim status: {instructor.claimStatus}
                 </p>
               )}
+
+              <Link
+                href={`/claim/${instructor.slug}`}
+                className="mt-3 block w-full rounded-xl border px-5 py-3 text-center font-semibold text-slate-700 hover:border-blue-600 hover:text-blue-700"
+              >
+                Claim this Profile
+              </Link>
 
               <button
                 type="button"

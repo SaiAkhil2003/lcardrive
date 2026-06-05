@@ -5,6 +5,64 @@ function getRateNumber(rate) {
   return Number(String(rate).replace(/[^0-9.]/g, "")) || 0;
 }
 
+function getLocationScore(instructor, suburb) {
+  if (!suburb) {
+    return 0;
+  }
+
+  const normalizedSuburb = suburb.toLowerCase().trim();
+
+  if (instructor.suburb.toLowerCase() === normalizedSuburb) {
+    return 3;
+  }
+
+  if (
+    instructor.serviceAreas?.some(
+      (area) => area.toLowerCase() === normalizedSuburb
+    )
+  ) {
+    return 2;
+  }
+
+  return 0;
+}
+
+function getLocalReason(instructor, body) {
+  const reasons = [];
+
+  if (getLocationScore(instructor, body?.suburb) > 0) {
+    reasons.push(`teaches around ${body.suburb}`);
+  }
+
+  if (body?.transmission && body.transmission !== "Both") {
+    reasons.push(`matches your ${body.transmission.toLowerCase()} preference`);
+  }
+
+  if (Array.isArray(body?.special_needs)) {
+    if (body.special_needs.includes("Anxiety Friendly")) {
+      reasons.push("supports nervous learners");
+    }
+
+    if (body.special_needs.includes("International Licence")) {
+      reasons.push("supports international licence conversion");
+    }
+  }
+
+  if (Number(body?.max_hourly_rate)) {
+    reasons.push(`fits your $${body.max_hourly_rate}/hr budget`);
+  }
+
+  if (Array.isArray(body?.available_days) && body.available_days.length > 0) {
+    reasons.push("has availability on one of your selected days");
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("has a strong rating and learner-friendly profile");
+  }
+
+  return `${instructor.name} is recommended because ${reasons.join(", ")}.`;
+}
+
 function localMatch(body) {
   const candidates = Array.isArray(body?.instructors) && body.instructors.length > 0
     ? body.instructors
@@ -55,11 +113,20 @@ function localMatch(body) {
 
       return true;
     })
-    .sort((left, right) => Number(right.rating) - Number(left.rating))
+    .sort((left, right) => {
+      const locationDifference =
+        getLocationScore(right, body?.suburb) - getLocationScore(left, body?.suburb);
+
+      if (locationDifference !== 0) {
+        return locationDifference;
+      }
+
+      return Number(right.rating) - Number(left.rating);
+    })
     .slice(0, 3)
     .map((instructor) => ({
       id: instructor.slug,
-      reason: `${instructor.name} matches the selected preferences using local Phase 1 filtering.`
+      reason: getLocalReason(instructor, body)
     }));
 }
 

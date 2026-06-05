@@ -69,7 +69,7 @@ export async function POST(request) {
     }
   }
 
-  // TODO: Replace this placeholder with durable per-user rate limiting.
+  // Future rate limit: 5 calls per instructor per day.
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({
       ok: true,

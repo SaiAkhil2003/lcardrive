@@ -38,6 +38,124 @@ function ClaimSignInPrompt() {
   );
 }
 
+function LocalDevelopmentNotice() {
+  return (
+    <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
+      Clerk keys are missing in local development. Public pages stay available,
+      and this form is shown so the manual claim flow can be tested without a
+      Clerk session.
+    </div>
+  );
+}
+
+function ClaimForm({ formData, submitStatus, onSubmit, onUpdateField }) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div>
+        <label className="mb-2 block text-sm font-semibold">
+          Full Name
+        </label>
+
+        <input
+          type="text"
+          value={formData.fullName}
+          onChange={(event) => onUpdateField("fullName", event.target.value)}
+          placeholder="Enter your full name"
+          required
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-semibold">
+          Email Address
+        </label>
+
+        <input
+          type="email"
+          value={formData.email}
+          onChange={(event) => onUpdateField("email", event.target.value)}
+          placeholder="Enter your email"
+          required
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-semibold">
+          Phone Number
+        </label>
+
+        <input
+          type="tel"
+          value={formData.phone}
+          onChange={(event) => onUpdateField("phone", event.target.value)}
+          placeholder="Enter your phone number"
+          required
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-semibold">
+          ADI Registration Number
+        </label>
+
+        <input
+          type="text"
+          value={formData.adiRegistration}
+          onChange={(event) =>
+            onUpdateField("adiRegistration", event.target.value)
+          }
+          placeholder="Example: ADI-VIC-10291"
+          required
+          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+        />
+
+        <p className="mt-2 text-sm text-slate-500">
+          This will be checked by the admin before verification.
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitStatus === "loading"}
+        className="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {submitStatus === "loading" ? "Submitting..." : "Submit Claim Request"}
+      </button>
+
+      {submitStatus === "error" && (
+        <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+          The claim request could not be submitted. Please try again.
+        </p>
+      )}
+    </form>
+  );
+}
+
+function ClaimConfirmation() {
+  return (
+    <div className="rounded-2xl border border-green-100 bg-green-50 p-6 text-center">
+      <h2 className="text-2xl font-bold text-green-800">
+        Claim request submitted for admin review.
+      </h2>
+
+      <p className="mt-3 text-green-700">
+        Admin will manually review your ADI registration number before approving
+        the profile claim.
+      </p>
+
+      <Link
+        href="/search"
+        className="mt-6 inline-block rounded-xl bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800"
+      >
+        Back to Search
+      </Link>
+    </div>
+  );
+}
+
 export default function ClaimProfilePage() {
   const params = useParams();
   const instructorId = params?.instructorId;
@@ -166,7 +284,20 @@ export default function ClaimProfilePage() {
 
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
           <section className="rounded-3xl border bg-white p-6 shadow-sm">
-            {!hasClerkConfigured && <ClaimSignInPrompt />}
+            {!hasClerkConfigured && (
+              <>
+                <LocalDevelopmentNotice />
+                {!submitted && (
+                  <ClaimForm
+                    formData={formData}
+                    submitStatus={submitStatus}
+                    onSubmit={handleSubmit}
+                    onUpdateField={updateField}
+                  />
+                )}
+                {submitted && <ClaimConfirmation />}
+              </>
+            )}
 
             {hasClerkConfigured && (
               <>
@@ -176,118 +307,15 @@ export default function ClaimProfilePage() {
 
                 <SignedIn>
                   {!submitted && (
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold">
-                          Full Name
-                        </label>
-
-                        <input
-                          type="text"
-                          value={formData.fullName}
-                          onChange={(event) =>
-                            updateField("fullName", event.target.value)
-                          }
-                          placeholder="Enter your full name"
-                          required
-                          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold">
-                          Email Address
-                        </label>
-
-                        <input
-                          type="email"
-                          value={formData.email}
-                          onChange={(event) =>
-                            updateField("email", event.target.value)
-                          }
-                          placeholder="Enter your email"
-                          required
-                          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold">
-                          Phone Number
-                        </label>
-
-                        <input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(event) =>
-                            updateField("phone", event.target.value)
-                          }
-                          placeholder="Enter your phone number"
-                          required
-                          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold">
-                          ADI Registration Number
-                        </label>
-
-                        <input
-                          type="text"
-                          value={formData.adiRegistration}
-                          onChange={(event) =>
-                            updateField("adiRegistration", event.target.value)
-                          }
-                          placeholder="Example: ADI-VIC-10291"
-                          required
-                          className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
-                        />
-
-                        <p className="mt-2 text-sm text-slate-500">
-                          This will be checked by the admin before verification.
-                        </p>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={submitStatus === "loading"}
-                        className="w-full rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {submitStatus === "loading"
-                          ? "Submitting..."
-                          : "Submit Claim Request"}
-                      </button>
-
-                      {submitStatus === "error" && (
-                        <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
-                          The claim request could not be submitted. Please try
-                          again.
-                        </p>
-                      )}
-                    </form>
+                    <ClaimForm
+                      formData={formData}
+                      submitStatus={submitStatus}
+                      onSubmit={handleSubmit}
+                      onUpdateField={updateField}
+                    />
                   )}
 
-                  {submitted && (
-                    <div className="rounded-2xl border border-green-100 bg-green-50 p-6 text-center">
-                      <h2 className="text-2xl font-bold text-green-800">
-                        Claim request submitted
-                      </h2>
-
-                      <p className="mt-3 text-green-700">
-                        Your request has been received. Admin will manually
-                        review your ADI registration number before approving the
-                        profile claim.
-                      </p>
-
-                      <Link
-                        href="/search"
-                        className="mt-6 inline-block rounded-xl bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800"
-                      >
-                        Back to Search
-                      </Link>
-                    </div>
-                  )}
+                  {submitted && <ClaimConfirmation />}
                 </SignedIn>
               </>
             )}

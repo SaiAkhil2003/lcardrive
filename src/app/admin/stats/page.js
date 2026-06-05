@@ -6,7 +6,7 @@ export default function AdminStatsPage() {
     { label: "Total instructors", value: instructors.length },
     { label: "Pending claims", value: pendingClaims.length },
     { label: "Review count", value: reviewQueue.length },
-    { label: "Searches today", value: 131 }
+    { label: "Total searches today", value: 131 }
   ];
 
   return (

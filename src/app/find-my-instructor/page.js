@@ -37,7 +37,7 @@ function getSuburbSlug(suburb) {
 }
 
 function getInstructorRateNumber(rate) {
-  return Number(rate.replace("$", "").replace("/hr", ""));
+  return Number(String(rate).replace(/[^0-9.]/g, "")) || 0;
 }
 
 function getMatchReason(instructor, answers) {
@@ -69,9 +69,68 @@ function getMatchReason(instructor, answers) {
   return `${instructor.name} is a possible match, but the hourly rate may be above your selected budget.`;
 }
 
+function instructorMatchesTransmission(instructor, transmission) {
+  if (!transmission || transmission === "Both") {
+    return true;
+  }
+
+  return (
+    instructor.transmission === transmission ||
+    instructor.transmission === "Both"
+  );
+}
+
+function getLocalMatches(answers) {
+  return instructors
+    .filter((instructor) => {
+      const instructorRate = getInstructorRateNumber(instructor.rate);
+      const userBudget = Number(answers.budget);
+
+      if (instructorRate > userBudget) {
+        return false;
+      }
+
+      if (!instructorMatchesTransmission(instructor, answers.transmission)) {
+        return false;
+      }
+
+      if (
+        answers.specialNeeds.includes("Anxiety Friendly") &&
+        !instructor.anxietyFriendly
+      ) {
+        return false;
+      }
+
+      if (
+        answers.specialNeeds.includes("International Licence") &&
+        !instructor.internationalLicence
+      ) {
+        return false;
+      }
+
+      if (
+        answers.days.length > 0 &&
+        !answers.days.some((day) => instructor.availability.includes(day))
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((left, right) => Number(right.rating) - Number(left.rating))
+    .slice(0, 3)
+    .map((instructor) => ({
+      id: instructor.slug,
+      reason: getMatchReason(instructor, answers)
+    }));
+}
+
 export default function FindMyInstructorPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [matchStatus, setMatchStatus] = useState("idle");
+  const [matchMode, setMatchMode] = useState("local-fallback");
+  const [matches, setMatches] = useState([]);
 
   const [answers, setAnswers] = useState({
     suburb: "",
@@ -109,13 +168,48 @@ export default function FindMyInstructorPage() {
     });
   }
 
+  async function loadMatches() {
+    setMatchStatus("loading");
+
+    try {
+      const response = await fetch("/api/ai/match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          suburb: answers.suburb,
+          transmission: answers.transmission,
+          special_needs: answers.specialNeeds,
+          available_days: answers.days,
+          max_hourly_rate: Number(answers.budget),
+          instructors
+        })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !Array.isArray(data.matches)) {
+        throw new Error("Match request failed");
+      }
+
+      setMatches(data.matches.slice(0, 3));
+      setMatchMode(data.mode || "local-fallback");
+    } catch {
+      setMatches(getLocalMatches(answers));
+      setMatchMode("local-fallback");
+    } finally {
+      setMatchStatus("idle");
+      setShowResults(true);
+    }
+  }
+
   function goNext() {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
       return;
     }
 
-    setShowResults(true);
+    loadMatches();
   }
 
   function goBack() {
@@ -130,31 +224,22 @@ export default function FindMyInstructorPage() {
     }
   }
 
-  const safeInstructors = instructors || [];
-
-  const recommendedInstructors = safeInstructors
-    .filter((instructor) => {
-      const instructorRate = getInstructorRateNumber(instructor.rate);
-      const userBudget = Number(answers.budget);
-
-      if (instructorRate > userBudget) {
-        return false;
-      }
-
-      if (!answers.transmission) {
-        return true;
-      }
-
-      if (answers.transmission === "Both") {
-        return true;
-      }
-
-      return (
-        instructor.transmission === answers.transmission ||
-        instructor.transmission === "Both"
+  const recommendedInstructors = matches
+    .map((match) => {
+      const instructor = instructors.find(
+        (item) => item.slug === match.id || item.id === match.id
       );
+
+      if (!instructor) {
+        return null;
+      }
+
+      return {
+        instructor,
+        reason: match.reason || getMatchReason(instructor, answers)
+      };
     })
-    .slice(0, 3);
+    .filter(Boolean);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -352,9 +437,14 @@ export default function FindMyInstructorPage() {
               <button
                 type="button"
                 onClick={goNext}
+                disabled={matchStatus === "loading"}
                 className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
               >
-                {currentStep === steps.length - 1 ? "Show Matches" : "Next"}
+                {matchStatus === "loading"
+                  ? "Finding Matches..."
+                  : currentStep === steps.length - 1
+                    ? "Show Matches"
+                    : "Next"}
               </button>
             </div>
           </div>
@@ -370,7 +460,9 @@ export default function FindMyInstructorPage() {
                   </h2>
 
                   <p className="mt-2 text-slate-600">
-                    These are sample recommendations for the MVP. Claude API matching will be connected later.
+                    {matchMode === "anthropic"
+                      ? "These recommendations were generated server-side from your answers."
+                      : "These recommendations use local fallback matching because the AI service is not configured or did not respond."}
                   </p>
                 </div>
 
@@ -407,7 +499,7 @@ export default function FindMyInstructorPage() {
 
             {recommendedInstructors.length > 0 && (
               <div className="grid gap-5 md:grid-cols-3">
-                {recommendedInstructors.map((instructor) => (
+                {recommendedInstructors.map(({ instructor, reason }) => (
                   <Link
                     key={instructor.slug}
                     href={`/instructors/${getSuburbSlug(instructor.suburb)}/${instructor.slug}`}
@@ -463,7 +555,7 @@ export default function FindMyInstructorPage() {
                       </p>
 
                       <p className="mt-2 text-sm leading-6 text-slate-700">
-                        {getMatchReason(instructor, answers)}
+                        {reason}
                       </p>
                     </div>
 
