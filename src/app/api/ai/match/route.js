@@ -27,40 +27,111 @@ function getLocationScore(instructor, suburb) {
   return 0;
 }
 
+function instructorMatchesTransmission(instructor, transmission) {
+  if (!transmission || transmission === "Both") {
+    return true;
+  }
+
+  return (
+    instructor.transmission === transmission ||
+    instructor.transmission === "Both"
+  );
+}
+
+function getTransmissionReason(instructor, transmission) {
+  if (!transmission) {
+    return null;
+  }
+
+  if (transmission === "Both" && instructor.transmission === "Both") {
+    return "support both auto and manual lessons";
+  }
+
+  if (
+    transmission !== "Both" &&
+    instructorMatchesTransmission(instructor, transmission)
+  ) {
+    return `support ${transmission.toLowerCase()} lessons`;
+  }
+
+  return null;
+}
+
+function getPreferredDays(body) {
+  return Array.isArray(body?.available_days) ? body.available_days : [];
+}
+
+function instructorMatchesPreferredDays(instructor, preferredDays) {
+  return preferredDays.some((day) => instructor.availability?.includes(day));
+}
+
 function getLocalReason(instructor, body) {
   const reasons = [];
+  const locationScore = getLocationScore(instructor, body?.suburb);
+  const transmissionReason = getTransmissionReason(
+    instructor,
+    body?.transmission
+  );
+  const specialNeeds = Array.isArray(body?.special_needs)
+    ? body.special_needs
+    : [];
+  const preferredDays = getPreferredDays(body);
+  const maxHourlyRate = Number(body?.max_hourly_rate);
+  const instructorRate = getRateNumber(instructor.rate);
 
-  if (getLocationScore(instructor, body?.suburb) > 0) {
-    reasons.push(`teaches around ${body.suburb}`);
+  if (locationScore === 3) {
+    reasons.push(`teach in ${instructor.suburb}`);
+  } else if (locationScore === 2) {
+    reasons.push(`cover ${body.suburb}`);
   }
 
-  if (body?.transmission && body.transmission !== "Both") {
-    reasons.push(`matches your ${body.transmission.toLowerCase()} preference`);
+  if (transmissionReason) {
+    reasons.push(transmissionReason);
   }
 
-  if (Array.isArray(body?.special_needs)) {
-    if (body.special_needs.includes("Anxiety Friendly")) {
-      reasons.push("supports nervous learners");
-    }
-
-    if (body.special_needs.includes("International Licence")) {
-      reasons.push("supports international licence conversion");
-    }
+  if (specialNeeds.includes("Anxiety Friendly") && instructor.anxietyFriendly) {
+    reasons.push("support nervous learners");
   }
 
-  if (Number(body?.max_hourly_rate)) {
-    reasons.push(`fits your $${body.max_hourly_rate}/hr budget`);
+  if (
+    specialNeeds.includes("International Licence") &&
+    instructor.internationalLicence
+  ) {
+    reasons.push("support licence conversion");
   }
 
-  if (Array.isArray(body?.available_days) && body.available_days.length > 0) {
-    reasons.push("has availability on one of your selected days");
+  if (maxHourlyRate && instructorRate <= maxHourlyRate) {
+    reasons.push(`fit your $${body.max_hourly_rate}/hr budget`);
+  } else if (
+    maxHourlyRate &&
+    instructorRate > maxHourlyRate &&
+    instructorRate - maxHourlyRate <= 10
+  ) {
+    reasons.push("are slightly above your budget");
+  }
+
+  if (
+    preferredDays.length > 0 &&
+    instructorMatchesPreferredDays(instructor, preferredDays)
+  ) {
+    reasons.push("are available on a preferred day");
   }
 
   if (reasons.length === 0) {
-    reasons.push("has a strong rating and learner-friendly profile");
+    if (Number(instructor.rating) >= 4.8) {
+      reasons.push("have a strong learner rating");
+    }
+
+    if (instructor.experience) {
+      reasons.push(`have ${instructor.experience} of experience`);
+    }
+
+    if (reasons.length === 0) {
+      reasons.push("have a learner-friendly profile");
+    }
   }
 
-  return `${instructor.name} is recommended because ${reasons.join(", ")}.`;
+  return `${instructor.name} is recommended because they ${reasons.join(", ")}.`;
 }
 
 function localMatch(body) {
@@ -75,50 +146,21 @@ function localMatch(body) {
     : [];
   const maxHourlyRate = Number(body?.max_hourly_rate) || 150;
 
-  return candidates
-    .filter((instructor) => {
-      if (getRateNumber(instructor.rate) > maxHourlyRate) {
-        return false;
-      }
-
-      if (
-        body?.transmission &&
-        body.transmission !== "Both" &&
-        instructor.transmission !== "Both" &&
-        instructor.transmission !== body.transmission
-      ) {
-        return false;
-      }
-
-      if (
-        specialNeeds.includes("Anxiety Friendly") &&
-        !instructor.anxietyFriendly
-      ) {
-        return false;
-      }
-
-      if (
-        specialNeeds.includes("International Licence") &&
-        !instructor.internationalLicence
-      ) {
-        return false;
-      }
-
-      if (
-        availableDays.length > 0 &&
-        !availableDays.some((day) => instructor.availability?.includes(day))
-      ) {
-        return false;
-      }
-
-      return true;
-    })
+  return [...candidates]
     .sort((left, right) => {
       const locationDifference =
         getLocationScore(right, body?.suburb) - getLocationScore(left, body?.suburb);
 
       if (locationDifference !== 0) {
         return locationDifference;
+      }
+
+      const scoreDifference =
+        getLocalMatchScore(right, body, specialNeeds, availableDays, maxHourlyRate) -
+        getLocalMatchScore(left, body, specialNeeds, availableDays, maxHourlyRate);
+
+      if (scoreDifference !== 0) {
+        return scoreDifference;
       }
 
       return Number(right.rating) - Number(left.rating);
@@ -128,6 +170,44 @@ function localMatch(body) {
       id: instructor.slug,
       reason: getLocalReason(instructor, body)
     }));
+}
+
+function getLocalMatchScore(
+  instructor,
+  body,
+  specialNeeds,
+  availableDays,
+  maxHourlyRate
+) {
+  let score = Number(instructor.rating) || 0;
+
+  if (getRateNumber(instructor.rate) <= maxHourlyRate) {
+    score += 2;
+  }
+
+  if (instructorMatchesTransmission(instructor, body?.transmission)) {
+    score += 2;
+  }
+
+  if (specialNeeds.includes("Anxiety Friendly") && instructor.anxietyFriendly) {
+    score += 2;
+  }
+
+  if (
+    specialNeeds.includes("International Licence") &&
+    instructor.internationalLicence
+  ) {
+    score += 2;
+  }
+
+  if (
+    availableDays.length > 0 &&
+    availableDays.some((day) => instructor.availability?.includes(day))
+  ) {
+    score += 1;
+  }
+
+  return score;
 }
 
 async function getClaudeMatches(body) {

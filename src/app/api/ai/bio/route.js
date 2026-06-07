@@ -7,6 +7,10 @@ function hasClerkServerConfig() {
   );
 }
 
+function hasClerkSessionCookie(request) {
+  return Boolean(request.cookies.get("__session"));
+}
+
 function placeholderBio(body) {
   const years = body?.years_experience || "several";
   const licenceTypes = body?.licence_types || "car";
@@ -59,7 +63,14 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
 
   if (hasClerkServerConfig()) {
-    const { userId } = await auth();
+    if (!hasClerkSessionCookie(request)) {
+      return NextResponse.json(
+        { ok: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    const { userId } = await auth().catch(() => ({ userId: null }));
 
     if (!userId) {
       return NextResponse.json(

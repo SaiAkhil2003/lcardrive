@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { instructors } from "@/data/instructors";
 
+export const metadata = {
+  title: "Find Driving Instructors | LCarDrive",
+  description:
+    "Search and compare driving instructors by suburb, price, transmission, language, specialisation, and learner needs."
+};
+
 const languages = ["English", "Hindi", "Tamil", "Arabic", "Mandarin"];
 const testCentres = [
   "Sunshine",

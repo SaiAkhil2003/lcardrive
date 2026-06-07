@@ -103,6 +103,7 @@ export default function Home() {
                   type="text"
                   value={suburb}
                   onChange={(event) => setSuburb(event.target.value)}
+                  aria-label="Suburb or postcode"
                   placeholder="Enter suburb or postcode"
                   className="rounded-xl border px-4 py-3 text-slate-900 outline-none focus:border-blue-600"
                 />
@@ -110,6 +111,7 @@ export default function Home() {
                 <select
                   value={radius}
                   onChange={(event) => setRadius(event.target.value)}
+                  aria-label="Search radius"
                   className="rounded-xl border px-4 py-3 text-slate-900 outline-none focus:border-blue-600"
                 >
                   <option value="5">5 km</option>

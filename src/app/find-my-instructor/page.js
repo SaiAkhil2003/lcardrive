@@ -80,44 +80,54 @@ function instructorMatchesTransmission(instructor, transmission) {
   );
 }
 
+function getMatchScore(instructor, answers) {
+  const instructorRate = getInstructorRateNumber(instructor.rate);
+  const userBudget = Number(answers.budget) || 150;
+  let score = Number(instructor.rating) || 0;
+
+  if (instructorRate <= userBudget) {
+    score += 2;
+  }
+
+  if (instructorMatchesTransmission(instructor, answers.transmission)) {
+    score += 2;
+  }
+
+  if (
+    answers.specialNeeds.includes("Anxiety Friendly") &&
+    instructor.anxietyFriendly
+  ) {
+    score += 2;
+  }
+
+  if (
+    answers.specialNeeds.includes("International Licence") &&
+    instructor.internationalLicence
+  ) {
+    score += 2;
+  }
+
+  if (
+    answers.days.length > 0 &&
+    answers.days.some((day) => instructor.availability.includes(day))
+  ) {
+    score += 1;
+  }
+
+  return score;
+}
+
 function getLocalMatches(answers) {
-  return instructors
-    .filter((instructor) => {
-      const instructorRate = getInstructorRateNumber(instructor.rate);
-      const userBudget = Number(answers.budget);
+  return [...instructors]
+    .sort((left, right) => {
+      const scoreDifference = getMatchScore(right, answers) - getMatchScore(left, answers);
 
-      if (instructorRate > userBudget) {
-        return false;
+      if (scoreDifference !== 0) {
+        return scoreDifference;
       }
 
-      if (!instructorMatchesTransmission(instructor, answers.transmission)) {
-        return false;
-      }
-
-      if (
-        answers.specialNeeds.includes("Anxiety Friendly") &&
-        !instructor.anxietyFriendly
-      ) {
-        return false;
-      }
-
-      if (
-        answers.specialNeeds.includes("International Licence") &&
-        !instructor.internationalLicence
-      ) {
-        return false;
-      }
-
-      if (
-        answers.days.length > 0 &&
-        !answers.days.some((day) => instructor.availability.includes(day))
-      ) {
-        return false;
-      }
-
-      return true;
+      return Number(right.rating) - Number(left.rating);
     })
-    .sort((left, right) => Number(right.rating) - Number(left.rating))
     .slice(0, 3)
     .map((instructor) => ({
       id: instructor.slug,
@@ -137,7 +147,7 @@ export default function FindMyInstructorPage() {
     transmission: "",
     specialNeeds: [],
     days: [],
-    budget: "10"
+    budget: "90"
   });
 
   const current = steps[currentStep];
@@ -325,6 +335,7 @@ export default function FindMyInstructorPage() {
                   type="text"
                   value={answers.suburb}
                   onChange={(event) => updateAnswer("suburb", event.target.value)}
+                  aria-label="Lesson suburb or postcode"
                   placeholder="Example: Footscray"
                   className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
                 />
@@ -408,6 +419,7 @@ export default function FindMyInstructorPage() {
                     max="150"
                     value={answers.budget}
                     onChange={(event) => updateAnswer("budget", event.target.value)}
+                    aria-label="Maximum hourly budget"
                     className="w-full"
                   />
 

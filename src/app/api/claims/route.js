@@ -8,6 +8,10 @@ function hasClerkServerConfig() {
   );
 }
 
+function hasClerkSessionCookie(request) {
+  return Boolean(request.cookies.get("__session"));
+}
+
 function validateClaim(body) {
   return Boolean(
     body?.instructorId &&
@@ -31,7 +35,14 @@ export async function POST(request) {
   let clerkUserId = "development-placeholder-user";
 
   if (hasClerkServerConfig()) {
-    const { userId } = await auth();
+    if (!hasClerkSessionCookie(request)) {
+      return NextResponse.json(
+        { ok: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    const { userId } = await auth().catch(() => ({ userId: null }));
 
     if (!userId) {
       return NextResponse.json(

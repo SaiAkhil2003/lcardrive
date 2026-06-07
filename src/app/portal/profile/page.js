@@ -13,6 +13,15 @@ const testCentreOptions = [
   "Broadmeadows",
   "Carlton"
 ];
+const dayOptions = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday"
+];
 
 function AiBioModal({ onClose, onBioGenerated }) {
   const [formData, setFormData] = useState({
@@ -181,6 +190,8 @@ export default function PortalProfilePage() {
   const [isAiOpen, setIsAiOpen] = useState(false);
   const defaultLanguages = instructor.language.split(", ");
   const defaultTestCentres = instructor.testCentre.split(", ");
+  const fiveHourPackPrice = instructor.packageOptions[0]?.replace("5 hour pack: ", "") || "";
+  const tenHourPackPrice = instructor.packageOptions[1]?.replace("10 hour pack: ", "") || "";
 
   return (
     <div className="space-y-6">
@@ -366,6 +377,100 @@ export default function PortalProfilePage() {
               />
             </label>
           ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold">Pricing and lesson details</h2>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">Hourly rate</span>
+            <input
+              defaultValue={instructor.rate.replace("/hr", "")}
+              className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">
+              5 hour pack price
+            </span>
+            <input
+              defaultValue={fiveHourPackPrice}
+              className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">
+              10 hour pack price
+            </span>
+            <input
+              defaultValue={tenHourPackPrice}
+              className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">
+              Lesson duration
+            </span>
+            <input
+              defaultValue={instructor.lessonDuration}
+              className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold">Availability and service areas</h2>
+
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
+          <div>
+            <p className="mb-3 text-sm font-semibold">Availability days</p>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {dayOptions.map((day) => (
+                <label
+                  key={day}
+                  className="flex items-center gap-3 rounded-xl border p-3 text-sm font-semibold"
+                >
+                  <input
+                    type="checkbox"
+                    defaultChecked={instructor.availability.includes(day)}
+                  />
+                  {day}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-3 text-sm font-semibold">Service areas</p>
+
+            <div className="flex flex-wrap gap-2">
+              {instructor.serviceAreas.map((area) => (
+                <span
+                  key={area}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700"
+                >
+                  {area}
+                </span>
+              ))}
+            </div>
+
+            <label className="mt-4 block">
+              <span className="mb-2 block text-sm font-semibold">
+                Add service area
+              </span>
+              <input
+                placeholder="Example: Yarraville"
+                className="w-full rounded-xl border px-4 py-3 outline-none focus:border-blue-600"
+              />
+            </label>
+          </div>
         </div>
       </section>
 

@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth/roles";
 
 const isPortalRoute = createRouteMatcher(["/portal(.*)"]);
-const isClaimRoute = createRouteMatcher(["/claim(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isAuthenticatedApiRoute = createRouteMatcher([
+  "/api/ai/bio",
+  "/api/claims"
+]);
 
 function hasClerkServerConfig() {
   return Boolean(
@@ -13,9 +16,33 @@ function hasClerkServerConfig() {
   );
 }
 
+function redirectToSignIn(request) {
+  const signInUrl = new URL("/sign-in", request.url);
+  signInUrl.searchParams.set("redirect_url", request.url);
+
+  return NextResponse.redirect(signInUrl);
+}
+
 const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
+  if (isAuthenticatedApiRoute(request)) {
+    const authObject = await auth();
+
+    if (!authObject.userId) {
+      return NextResponse.json(
+        { ok: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.next();
+  }
+
   if (isAdminRoute(request)) {
-    const authObject = await auth.protect();
+    const authObject = await auth();
+
+    if (!authObject.userId) {
+      return redirectToSignIn(request);
+    }
 
     if (!isAdmin({ sessionClaims: authObject.sessionClaims, ...authObject.sessionClaims })) {
       return new NextResponse("Forbidden: LCarDrive admin role required.", {
@@ -27,11 +54,11 @@ const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
   }
 
   if (isPortalRoute(request)) {
-    await auth.protect();
-  }
+    const authObject = await auth();
 
-  if (isClaimRoute(request)) {
-    return NextResponse.next();
+    if (!authObject.userId) {
+      return redirectToSignIn(request);
+    }
   }
 
   return NextResponse.next();
@@ -47,10 +74,11 @@ export default function middleware(request, event) {
 
 export const config = {
   matcher: [
+    "/portal",
     "/portal/:path*",
+    "/admin",
     "/admin/:path*",
-    "/claim/:path*",
     "/api/ai/bio",
-    "/api/claims"
+    "/api/claims",
   ]
 };
