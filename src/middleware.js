@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/auth/roles";
 
 const isPortalRoute = createRouteMatcher(["/portal(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isAdminApiRoute = createRouteMatcher(["/api/admin(.*)"]);
 const isAuthenticatedApiRoute = createRouteMatcher([
   "/api/ai/bio",
   "/api/claims"
@@ -37,14 +38,28 @@ const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
-  if (isAdminRoute(request)) {
+  if (isAdminRoute(request) || isAdminApiRoute(request)) {
     const authObject = await auth();
 
     if (!authObject.userId) {
+      if (isAdminApiRoute(request)) {
+        return NextResponse.json(
+          { ok: false, error: "Authentication required." },
+          { status: 401 }
+        );
+      }
+
       return redirectToSignIn(request);
     }
 
     if (!isAdmin({ sessionClaims: authObject.sessionClaims, ...authObject.sessionClaims })) {
+      if (isAdminApiRoute(request)) {
+        return NextResponse.json(
+          { ok: false, error: "Forbidden: LCarDrive admin role required." },
+          { status: 403 }
+        );
+      }
+
       return new NextResponse("Forbidden: LCarDrive admin role required.", {
         status: 403
       });
@@ -78,6 +93,7 @@ export const config = {
     "/portal/:path*",
     "/admin",
     "/admin/:path*",
+    "/api/admin/:path*",
     "/api/ai/bio",
     "/api/claims",
   ]

@@ -35,13 +35,15 @@ Required production variables:
 - `NEXT_PUBLIC_SITE_URL=https://cardrive.56776543.xyz`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `GOOGLE_MAPS_API_KEY`
 - `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
 - `ANTHROPIC_API_KEY`
+- `ADMIN_NOTIFICATION_EMAIL`
 
-`RESEND_FROM_EMAIL` and `RESEND_CONTACT_TO_EMAIL` are also needed before real
-contact emails can be delivered.
+`NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` is only needed if client-side Places
+autocomplete is added later; restrict it to the production domain before use.
 
 ## Clerk And Google OAuth
 
@@ -67,11 +69,27 @@ Run the migrations in `supabase/migrations` in order:
 3. `003_create_claims_table.sql`
 4. `004_create_search_logs_table.sql`
 5. `005_rls_policies.sql`
+6. `006_phase1_production_readiness_columns.sql`
 
-Seed data starts at `supabase/seed/sample-instructors.csv`. The checked-in
-instructor rows are sample placeholders for Phase 1 development. Production
-launch needs 80 to 120 real seeded instructor listings from VicRoads ADI
-register, Google Maps, instructor websites, and Facebook pages.
+Seed data starts at `supabase/seed/sample-instructors.csv` for local demos. The
+checked-in instructor rows are sample placeholders and are clearly marked as
+sample data. Production launch needs 80 to 120 real seeded instructor listings
+using `supabase/seed/real-instructors-template.csv`.
+
+Real import rows should include:
+
+- `id`, `slug`, `name`, `suburb`, `state`, `latitude`, `longitude`
+- `transmission`, `licence_type`, `hourly_rate`, `package_5hr`,
+  `package_10hr`
+- `rating`, `review_count`, `languages`, `anxiety_friendly`,
+  `international_licence`, `verified`
+- `experience_years`, `vehicle_make`, `vehicle_model`, `vehicle_year`,
+  `dual_controls`
+- `service_areas`, `test_centres`, `bio`, `adi_registration`, `phone`, `email`,
+  `profile_photo_url`
+
+Do not seed fake production instructors. Replace sample rows only after the real
+data source and business review are complete.
 
 ## Vercel Deployment
 
@@ -94,9 +112,9 @@ Required Vercel production environment:
 
 - Clerk keys and Clerk URL variables
 - `NEXT_PUBLIC_SITE_URL=https://cardrive.56776543.xyz`
-- Supabase URL, anon key, and service key
+- Supabase URL, anon key, and service role key
 - Anthropic API key
-- Resend API key plus sender/recipient email variables
+- Resend API key plus sender/admin notification email variables
 - Google Maps API key
 
 ## Domain Mapping
@@ -132,17 +150,23 @@ confirmation.
 
 ## Placeholder Services
 
-Current Phase 1 placeholders:
+Current Phase 1 fallback behavior:
 
-- Instructor data is checked-in sample data until Supabase production data is
-  seeded.
-- Admin claims, reviews, listings, imports, and stats are UI placeholders until
-  connected to Supabase workflows.
+- Public instructor search, profile pages, admin listings, admin claim/review
+  queues, and admin stats read from Supabase when production keys and data are
+  configured. They fall back to checked-in sample/placeholder data when
+  Supabase is unavailable.
+- Claim submissions, review submissions, search logs, and admin listing edits
+  persist to Supabase when the required variables are configured. They return
+  safe fallback responses when local demo keys are missing.
 - CSV import preview does not parse real CSV unless a parser is added later.
-- Google Maps geocoding is marked pending when `GOOGLE_MAPS_API_KEY` is missing.
+- Google Maps geocoding and radius search run server-side when
+  `GOOGLE_MAPS_API_KEY` and instructor coordinates are available.
 - Contact form submissions return safe local success without Resend delivery
   keys.
 - AI matching and bio writing return local fallbacks without `ANTHROPIC_API_KEY`.
+- AI routes include a process-local rate-limit placeholder. Use a durable rate
+  limiter before high-traffic production use.
 
 ## Phase 1 Scope
 

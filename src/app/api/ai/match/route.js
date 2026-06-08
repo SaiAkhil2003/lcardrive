@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { instructors as sampleInstructors } from "@/data/instructors";
+import { getInstructors } from "@/lib/instructors";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 function getRateNumber(rate) {
   return Number(String(rate).replace(/[^0-9.]/g, "")) || 0;
@@ -134,10 +135,30 @@ function getLocalReason(instructor, body) {
   return `${instructor.name} is recommended because they ${reasons.join(", ")}.`;
 }
 
-function localMatch(body) {
-  const candidates = Array.isArray(body?.instructors) && body.instructors.length > 0
-    ? body.instructors
-    : sampleInstructors;
+async function getCandidateInstructors(body) {
+  if (Array.isArray(body?.instructors) && body.instructors.length > 0) {
+    return body.instructors;
+  }
+
+  const result = await getInstructors();
+  return result.data;
+}
+
+function attachInstructors(matches, candidates) {
+  return matches.slice(0, 3).map((match) => {
+    const instructor = candidates.find(
+      (item) => item.slug === match.id || item.id === match.id
+    );
+
+    return {
+      ...match,
+      instructor
+    };
+  });
+}
+
+async function localMatch(body) {
+  const candidates = await getCandidateInstructors(body);
   const specialNeeds = Array.isArray(body?.special_needs)
     ? body.special_needs
     : [];
@@ -168,7 +189,8 @@ function localMatch(body) {
     .slice(0, 3)
     .map((instructor) => ({
       id: instructor.slug,
-      reason: getLocalReason(instructor, body)
+      reason: getLocalReason(instructor, body),
+      instructor
     }));
 }
 
@@ -256,24 +278,45 @@ async function getClaudeMatches(body) {
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
+  const identifier = request.headers.get("x-forwarded-for") || "ai-match-public";
+  const rateLimit = checkRateLimit(identifier, {
+    scope: "ai-match",
+    limit: 30,
+    windowMs: 60 * 60 * 1000
+  });
+  const candidates = await getCandidateInstructors(body);
+  const matchPayload = {
+    ...body,
+    instructors: candidates
+  };
 
-  // TODO: Replace this placeholder with durable per-IP/user rate limiting.
+  if (!rateLimit.allowed) {
+    return NextResponse.json({
+      matches: await localMatch(matchPayload),
+      mode: "rate-limited-local-fallback",
+      rateLimit
+    });
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({
-      matches: localMatch(body),
-      mode: "local-fallback"
+      matches: await localMatch(matchPayload),
+      mode: "local-fallback",
+      rateLimit
     });
   }
 
   try {
     return NextResponse.json({
-      matches: await getClaudeMatches(body),
-      mode: "anthropic"
+      matches: attachInstructors(await getClaudeMatches(matchPayload), candidates),
+      mode: "anthropic",
+      rateLimit
     });
   } catch {
     return NextResponse.json({
-      matches: localMatch(body),
-      mode: "local-fallback"
+      matches: await localMatch(matchPayload),
+      mode: "local-fallback",
+      rateLimit
     });
   }
 }

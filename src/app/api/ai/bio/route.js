@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 function hasClerkServerConfig() {
   return Boolean(
@@ -61,6 +62,7 @@ async function generateClaudeBio(body) {
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
+  let userId = null;
 
   if (hasClerkServerConfig()) {
     if (!hasClerkSessionCookie(request)) {
@@ -70,7 +72,8 @@ export async function POST(request) {
       );
     }
 
-    const { userId } = await auth().catch(() => ({ userId: null }));
+    const authObject = await auth().catch(() => ({ userId: null }));
+    userId = authObject.userId;
 
     if (!userId) {
       return NextResponse.json(
@@ -80,12 +83,30 @@ export async function POST(request) {
     }
   }
 
-  // Future rate limit: 5 calls per instructor per day.
+  const rateLimit = checkRateLimit(
+    userId || request.headers.get("x-forwarded-for") || "ai-bio-public",
+    {
+      scope: "ai-bio",
+      limit: 5,
+      windowMs: 24 * 60 * 60 * 1000
+    }
+  );
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({
+      ok: true,
+      mode: "rate-limited-placeholder",
+      bio: placeholderBio(body),
+      rateLimit
+    });
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({
       ok: true,
       mode: "development-placeholder",
-      bio: placeholderBio(body)
+      bio: placeholderBio(body),
+      rateLimit
     });
   }
 
@@ -93,13 +114,15 @@ export async function POST(request) {
     return NextResponse.json({
       ok: true,
       mode: "anthropic",
-      bio: await generateClaudeBio(body)
+      bio: await generateClaudeBio(body),
+      rateLimit
     });
   } catch {
     return NextResponse.json({
       ok: true,
       mode: "development-placeholder",
-      bio: placeholderBio(body)
+      bio: placeholderBio(body),
+      rateLimit
     });
   }
 }

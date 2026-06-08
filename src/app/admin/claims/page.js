@@ -1,6 +1,10 @@
-import { pendingClaims } from "@/data/adminPlaceholders";
+import { getPendingClaims } from "@/lib/adminData";
 
-export default function AdminClaimsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminClaimsPage() {
+  const { data: pendingClaims, source } = await getPendingClaims();
+
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -12,7 +16,9 @@ export default function AdminClaimsPage() {
 
         <p className="mt-3 max-w-2xl text-slate-600">
           Review ADI registration numbers submitted after a Clerk sign-up flow.
-          Approve and reject actions are UI-only when Supabase is not connected.
+          {source === "supabase"
+            ? " Pending claims are loaded from Supabase."
+            : " Approve and reject actions are UI-only when Supabase is not connected."}
         </p>
       </section>
 

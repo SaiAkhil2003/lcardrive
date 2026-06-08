@@ -1,8 +1,9 @@
 import AdminListingsClient from "@/components/admin/AdminListingsClient";
-import { instructors } from "@/data/instructors";
-import { pendingClaims } from "@/data/adminPlaceholders";
+import { getAdminInstructors, getPendingClaims } from "@/lib/adminData";
 
-function getClaimStatus(instructor) {
+export const dynamic = "force-dynamic";
+
+function getClaimStatus(instructor, pendingClaims) {
   if (pendingClaims.some((claim) => claim.instructorSlug === instructor.slug)) {
     return "Pending";
   }
@@ -10,13 +11,17 @@ function getClaimStatus(instructor) {
   return instructor.verified ? "Verified" : "Unclaimed";
 }
 
-export default function AdminListingsPage() {
-  const listings = instructors.map((instructor) => ({
+export default async function AdminListingsPage() {
+  const [instructorResult, claimResult] = await Promise.all([
+    getAdminInstructors(),
+    getPendingClaims()
+  ]);
+  const listings = instructorResult.data.map((instructor) => ({
     slug: instructor.slug,
     name: instructor.name,
     suburb: instructor.suburb,
     state: instructor.state,
-    claimStatus: getClaimStatus(instructor),
+    claimStatus: getClaimStatus(instructor, claimResult.data),
     rate: instructor.rate,
     rating: instructor.rating,
     transmission: instructor.transmission,
@@ -35,11 +40,16 @@ export default function AdminListingsPage() {
         <h1 className="mt-2 text-3xl font-bold">All listings</h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          Seeded instructor listings from the shared placeholder data.
+          {instructorResult.source === "supabase"
+            ? "Instructor listings loaded from Supabase."
+            : "Seeded instructor listings from the shared placeholder data."}
         </p>
       </section>
 
-      <AdminListingsClient initialListings={listings} />
+      <AdminListingsClient
+        initialListings={listings}
+        canPersist={instructorResult.source === "supabase"}
+      />
     </div>
   );
 }

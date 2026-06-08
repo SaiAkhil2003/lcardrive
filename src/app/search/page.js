@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { instructors } from "@/data/instructors";
+import { getSuburbSlug } from "@/lib/instructors";
+import {
+  getBooleanParam,
+  getLicenceTypeFilter,
+  getParam,
+  getSearchResults,
+  getTransmissionFilter,
+  languageOptions,
+  testCentreOptions
+} from "@/lib/search";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Find Driving Instructors | LCarDrive",
@@ -7,193 +18,7 @@ export const metadata = {
     "Search and compare driving instructors by suburb, price, transmission, language, specialisation, and learner needs."
 };
 
-const languages = ["English", "Hindi", "Tamil", "Arabic", "Mandarin"];
-const testCentres = [
-  "Sunshine",
-  "Werribee",
-  "Moorabbin",
-  "Bundoora",
-  "Broadmeadows",
-  "Carlton",
-  "Melton"
-];
-
-function getSuburbSlug(suburb) {
-  return suburb.toLowerCase().replaceAll(" ", "-");
-}
-
-function getParam(searchParams, key, fallback = "") {
-  const value = searchParams?.[key];
-
-  if (Array.isArray(value)) {
-    return value[0] || fallback;
-  }
-
-  return value || fallback;
-}
-
-function getLegacyFilters(searchParams) {
-  return getParam(searchParams, "filters")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function getBooleanParam(searchParams, key, legacyLabel) {
-  const value = getParam(searchParams, key);
-  const legacyFilters = getLegacyFilters(searchParams);
-
-  return (
-    value === "on" ||
-    value === "true" ||
-    value === "1" ||
-    legacyFilters.includes(legacyLabel)
-  );
-}
-
-function getRateNumber(rate) {
-  return Number(String(rate).replace(/[^0-9.]/g, "")) || 0;
-}
-
-function getTransmissionFilter(searchParams) {
-  const transmission = getParam(searchParams, "transmission");
-  const legacyFilters = getLegacyFilters(searchParams);
-
-  if (transmission) {
-    return transmission;
-  }
-
-  if (legacyFilters.includes("Auto")) {
-    return "Auto";
-  }
-
-  if (legacyFilters.includes("Manual")) {
-    return "Manual";
-  }
-
-  return "";
-}
-
-function getLicenceTypeFilter(searchParams) {
-  const licenceType = getParam(searchParams, "licenceType");
-  const legacyFilters = getLegacyFilters(searchParams);
-
-  if (licenceType) {
-    return licenceType;
-  }
-
-  if (legacyFilters.includes("Car")) {
-    return "Car";
-  }
-
-  if (legacyFilters.includes("Motorbike")) {
-    return "Motorbike";
-  }
-
-  return "";
-}
-
-function instructorMatchesTransmission(instructor, transmission) {
-  if (!transmission) {
-    return true;
-  }
-
-  if (transmission === "Both") {
-    return true;
-  }
-
-  return (
-    instructor.transmission === transmission ||
-    instructor.transmission === "Both" ||
-    instructor.vehicle.transmission.toLowerCase().includes(transmission.toLowerCase())
-  );
-}
-
-function applyFilters(searchParams) {
-  const licenceType = getLicenceTypeFilter(searchParams);
-  const transmission = getTransmissionFilter(searchParams);
-  const maxPrice = Number(getParam(searchParams, "maxPrice", "150")) || 150;
-  const language = getParam(searchParams, "language");
-  const gender = getParam(searchParams, "gender");
-  const testCentre = getParam(searchParams, "testCentre");
-  const anxietyFriendly = getBooleanParam(
-    searchParams,
-    "anxietyFriendly",
-    "Anxiety Friendly"
-  );
-  const internationalLicence = getBooleanParam(
-    searchParams,
-    "internationalLicence",
-    "International Licence"
-  );
-
-  return instructors.filter((instructor) => {
-    if (licenceType && !instructor.licenceTypes.includes(licenceType)) {
-      return false;
-    }
-
-    if (!instructorMatchesTransmission(instructor, transmission)) {
-      return false;
-    }
-
-    if (getRateNumber(instructor.rate) > maxPrice) {
-      return false;
-    }
-
-    if (language && !instructor.language.toLowerCase().includes(language.toLowerCase())) {
-      return false;
-    }
-
-    if (gender && instructor.gender !== gender) {
-      return false;
-    }
-
-    if (anxietyFriendly && !instructor.anxietyFriendly) {
-      return false;
-    }
-
-    if (internationalLicence && !instructor.internationalLicence) {
-      return false;
-    }
-
-    if (
-      testCentre &&
-      !instructor.testCentre.toLowerCase().includes(testCentre.toLowerCase())
-    ) {
-      return false;
-    }
-
-    return true;
-  });
-}
-
-function sortResults(results, sort) {
-  const sorted = [...results];
-
-  if (sort === "price") {
-    return sorted.sort((left, right) => getRateNumber(left.rate) - getRateNumber(right.rate));
-  }
-
-  if (sort === "rating") {
-    return sorted.sort((left, right) => Number(right.rating) - Number(left.rating));
-  }
-
-  if (sort === "newest") {
-    return sorted.sort(
-      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-    );
-  }
-
-  return sorted.sort((left, right) => {
-    if (left.verified !== right.verified) {
-      return left.verified ? -1 : 1;
-    }
-
-    return Number(right.rating) - Number(left.rating);
-  });
-}
-
-export default function SearchPage({ searchParams }) {
+export default async function SearchPage({ searchParams }) {
   const suburb = getParam(searchParams, "suburb", "Melbourne west");
   const radius = getParam(searchParams, "radius", "10");
   const licenceType = getLicenceTypeFilter(searchParams);
@@ -213,7 +38,7 @@ export default function SearchPage({ searchParams }) {
     "internationalLicence",
     "International Licence"
   );
-  const results = sortResults(applyFilters(searchParams), sort);
+  const { results, source, hasGeoRadius } = await getSearchResults(searchParams);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -261,8 +86,11 @@ export default function SearchPage({ searchParams }) {
           </h1>
 
           <p className="mt-2 text-slate-600">
-            Showing sample results within {radius} km. Distances use existing
-            sample data while Google Geocoding and Supabase geo search are pending.
+            {hasGeoRadius
+              ? `Showing results within ${radius} km using stored coordinates.`
+              : source === "sample" || source === "sample-empty"
+                ? `Showing sample results within ${radius} km. Configure Supabase and Google Maps for live radius search.`
+                : `Showing results within ${radius} km. Add coordinates and Google Maps geocoding for exact radius search.`}
           </p>
         </div>
 
@@ -346,7 +174,7 @@ export default function SearchPage({ searchParams }) {
                   className="w-full rounded-xl border px-3 py-3"
                 >
                   <option value="">Any language</option>
-                  {languages.map((item) => (
+                  {languageOptions.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -401,7 +229,7 @@ export default function SearchPage({ searchParams }) {
                   className="w-full rounded-xl border px-3 py-3"
                 >
                   <option value="">Any test centre</option>
-                  {testCentres.map((item) => (
+                  {testCentreOptions.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>

@@ -1,12 +1,14 @@
-import { instructors } from "@/data/instructors";
-import { pendingClaims, reviewQueue, topSuburbs } from "@/data/adminPlaceholders";
+import { getAdminDashboardData } from "@/lib/adminData";
 
-export default function AdminStatsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminStatsPage() {
+  const dashboard = await getAdminDashboardData();
   const stats = [
-    { label: "Total instructors", value: instructors.length },
-    { label: "Pending claims", value: pendingClaims.length },
-    { label: "Review count", value: reviewQueue.length },
-    { label: "Total searches today", value: 131 }
+    { label: "Total instructors", value: dashboard.instructors.length },
+    { label: "Pending claims", value: dashboard.pendingClaims.length },
+    { label: "Review count", value: dashboard.pendingReviews.length },
+    { label: "Total searches today", value: dashboard.searchesToday }
   ];
 
   return (
@@ -19,8 +21,8 @@ export default function AdminStatsPage() {
         <h1 className="mt-2 text-3xl font-bold">Platform stats</h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          Placeholder cards for admin reporting. Real analytics will be wired
-          after the database and event tracking are ready.
+          Search analytics read from Supabase search logs when configured, with
+          placeholder fallback for local demos.
         </p>
       </section>
 
@@ -45,7 +47,7 @@ export default function AdminStatsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {topSuburbs.map((item) => (
+              {dashboard.topSuburbs.map((item) => (
                 <tr key={item.suburb}>
                   <td className="px-4 py-3 font-semibold">{item.suburb}</td>
                   <td className="px-4 py-3 text-slate-600">

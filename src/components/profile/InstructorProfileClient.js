@@ -160,10 +160,43 @@ function ContactModal({ instructor, onClose }) {
 
 function ReviewForm({ instructor }) {
   const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState("idle");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+    setStatus("loading");
+
+    const form = new FormData(event.currentTarget);
+
+    try {
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          instructorId: instructor.slug,
+          reviewerFirstName: form.get("firstName"),
+          reviewerEmail: form.get("email"),
+          ratingOverall: form.get("ratingOverall"),
+          ratingPatience: form.get("ratingPatience"),
+          ratingCommunication: form.get("ratingCommunication"),
+          ratingValue: form.get("ratingValue"),
+          ratingPunctuality: form.get("ratingPunctuality"),
+          passOutcome: form.get("passOutcome"),
+          comment: form.get("comment")
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Review submission failed");
+      }
+
+      setSubmitted(true);
+      setStatus("success");
+    } catch {
+      setStatus("error");
+    }
   }
 
   if (submitted) {
@@ -254,10 +287,17 @@ function ReviewForm({ instructor }) {
 
       <button
         type="submit"
+        disabled={status === "loading"}
         className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
       >
-        Submit Review
+        {status === "loading" ? "Submitting..." : "Submit Review"}
       </button>
+
+      {status === "error" && (
+        <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+          The review could not be submitted. Please try again.
+        </p>
+      )}
     </form>
   );
 }

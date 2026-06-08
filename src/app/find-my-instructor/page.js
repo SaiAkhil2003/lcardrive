@@ -236,9 +236,9 @@ export default function FindMyInstructorPage() {
 
   const recommendedInstructors = matches
     .map((match) => {
-      const instructor = instructors.find(
-        (item) => item.slug === match.id || item.id === match.id
-      );
+      const instructor =
+        match.instructor ||
+        instructors.find((item) => item.slug === match.id || item.id === match.id);
 
       if (!instructor) {
         return null;

@@ -38,7 +38,8 @@ function EditModal({ draft, saveMessage, onChange, onClose, onSave }) {
               Edit {draft.name}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Phase 1 edits are saved only in this admin browser session.
+              Phase 1 edits persist to Supabase when production data is
+              configured, otherwise they remain in this admin browser session.
             </p>
           </div>
 
@@ -120,7 +121,7 @@ function EditModal({ draft, saveMessage, onChange, onClose, onSave }) {
   );
 }
 
-export default function AdminListingsClient({ initialListings }) {
+export default function AdminListingsClient({ initialListings, canPersist = false }) {
   const [listings, setListings] = useState(initialListings);
   const [selectedListing, setSelectedListing] = useState(null);
   const [draft, setDraft] = useState(null);
@@ -139,8 +140,37 @@ export default function AdminListingsClient({ initialListings }) {
     }));
   }
 
-  function saveDraft(event) {
+  async function saveDraft(event) {
     event.preventDefault();
+
+    if (canPersist) {
+      setSaveMessage("Saving...");
+
+      try {
+        const response = await fetch("/api/admin/listings", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(draft)
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Listing update failed");
+        }
+
+        setSaveMessage("Saved to Supabase.");
+      } catch {
+        setSaveMessage(
+          "Could not persist to Supabase. The draft remains in this admin browser session."
+        );
+      }
+    } else {
+      setSaveMessage(
+        "Saved in this admin session. Configure Supabase production keys to persist listing edits."
+      );
+    }
 
     setListings((currentListings) =>
       currentListings.map((listing) =>
@@ -148,9 +178,6 @@ export default function AdminListingsClient({ initialListings }) {
       )
     );
     setSelectedListing({ ...selectedListing, ...draft });
-    setSaveMessage(
-      "Saved in this admin session. Database persistence will be enabled when Supabase production is connected."
-    );
   }
 
   function closeEditor() {

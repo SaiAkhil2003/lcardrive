@@ -1,14 +1,6 @@
-const expectedColumns = [
-  "first_name",
-  "last_name",
-  "suburb",
-  "postcode",
-  "state",
-  "phone",
-  "adi_registration",
-  "licence_types",
-  "transmission"
-];
+import { realInstructorColumns } from "@/lib/import/instructors";
+
+export const dynamic = "force-dynamic";
 
 export default function AdminImportPage() {
   const hasGoogleMapsKey = Boolean(process.env.GOOGLE_MAPS_API_KEY);
@@ -23,7 +15,9 @@ export default function AdminImportPage() {
         <h1 className="mt-2 text-3xl font-bold">Bulk import listings</h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          Bulk import creates unclaimed listings.
+          Bulk import creates unclaimed listings. Use
+          supabase/seed/real-instructors-template.csv for the production data
+          structure.
         </p>
 
         {!hasGoogleMapsKey && (
@@ -43,7 +37,7 @@ export default function AdminImportPage() {
           </p>
 
           <div className="mx-auto mt-4 flex max-w-3xl flex-wrap justify-center gap-2">
-            {expectedColumns.map((column) => (
+            {realInstructorColumns.map((column) => (
               <span
                 key={column}
                 className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
@@ -75,7 +69,7 @@ export default function AdminImportPage() {
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                {expectedColumns.slice(0, 5).map((column) => (
+                {realInstructorColumns.slice(0, 5).map((column) => (
                   <th key={column} className="px-4 py-3 font-semibold">
                     {column}
                   </th>
@@ -84,10 +78,10 @@ export default function AdminImportPage() {
             </thead>
             <tbody>
               <tr>
+                <td className="px-4 py-3">sample-id</td>
+                <td className="px-4 py-3">sample-slug</td>
+                <td className="px-4 py-3">Sample Instructor</td>
                 <td className="px-4 py-3">Sample</td>
-                <td className="px-4 py-3">Instructor</td>
-                <td className="px-4 py-3">Footscray</td>
-                <td className="px-4 py-3">3011</td>
                 <td className="px-4 py-3">VIC</td>
               </tr>
             </tbody>

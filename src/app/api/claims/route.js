@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { insertWithServiceRole } from "@/lib/supabase/admin";
+import { sendAdminNotification, sendEmail } from "@/lib/resend";
 
 function hasClerkServerConfig() {
   return Boolean(
@@ -74,6 +75,32 @@ export async function POST(request) {
   }
 
   if (result.placeholder) {
+    await Promise.all([
+      sendEmail({
+        to: body.email,
+        subject: "LCarDrive claim request received",
+        text: [
+          `Hi ${body.fullName},`,
+          "",
+          "Your LCarDrive profile claim was received for admin review.",
+          `Instructor profile: ${body.instructorId}`,
+          "No profile is auto-verified. Admin will review your ADI registration before approval."
+        ].join("\n")
+      }),
+      sendAdminNotification({
+        subject: "New LCarDrive profile claim",
+        text: [
+          "A new LCarDrive profile claim was submitted.",
+          "",
+          `Instructor profile: ${body.instructorId}`,
+          `Submitted name: ${body.fullName}`,
+          `Email: ${body.email}`,
+          `Phone: ${body.phone}`,
+          `ADI registration: ${body.adiRegistration}`
+        ].join("\n")
+      })
+    ]);
+
     return NextResponse.json({
       ok: true,
       mode: "development",
@@ -82,6 +109,32 @@ export async function POST(request) {
       claim: payload
     });
   }
+
+  await Promise.all([
+    sendEmail({
+      to: body.email,
+      subject: "LCarDrive claim request received",
+      text: [
+        `Hi ${body.fullName},`,
+        "",
+        "Your LCarDrive profile claim was received for admin review.",
+        `Instructor profile: ${body.instructorId}`,
+        "No profile is auto-verified. Admin will review your ADI registration before approval."
+      ].join("\n")
+    }),
+    sendAdminNotification({
+      subject: "New LCarDrive profile claim",
+      text: [
+        "A new LCarDrive profile claim was submitted.",
+        "",
+        `Instructor profile: ${body.instructorId}`,
+        `Submitted name: ${body.fullName}`,
+        `Email: ${body.email}`,
+        `Phone: ${body.phone}`,
+        `ADI registration: ${body.adiRegistration}`
+      ].join("\n")
+    })
+  ]);
 
   return NextResponse.json({
     ok: true,

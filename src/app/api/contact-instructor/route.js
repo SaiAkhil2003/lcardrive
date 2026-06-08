@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import { getInstructorBySlug } from "@/lib/instructors";
+import {
+  hasAdminNotificationEmail,
+  hasResendConfig,
+  sendEmail
+} from "@/lib/resend";
 
 function hasRequiredContactFields(body) {
   return Boolean(body?.name && body?.email && body?.message && body?.instructorId);
@@ -14,13 +20,12 @@ export async function POST(request) {
     );
   }
 
-  const hasResendDeliverySetup = Boolean(
-    process.env.RESEND_API_KEY &&
-      process.env.RESEND_FROM_EMAIL &&
-      process.env.RESEND_CONTACT_TO_EMAIL
-  );
+  const { data: instructor } = await getInstructorBySlug(body.instructorId, {
+    includePrivate: true
+  });
+  const recipient = instructor?.email || process.env.ADMIN_NOTIFICATION_EMAIL || process.env.RESEND_CONTACT_TO_EMAIL;
 
-  if (!hasResendDeliverySetup) {
+  if (!hasResendConfig() || !recipient) {
     return NextResponse.json({
       ok: true,
       mode: "development",
@@ -36,39 +41,34 @@ export async function POST(request) {
     });
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL,
-      to: process.env.RESEND_CONTACT_TO_EMAIL,
-      subject: `LCarDrive contact request for ${body.instructorName}`,
-      text: [
-        `Instructor: ${body.instructorName}`,
-        `Name: ${body.name}`,
-        `Email: ${body.email}`,
-        `Phone: ${body.phone || "Not provided"}`,
-        "",
-        body.message
-      ].join("\n")
-    })
+  const delivery = await sendEmail({
+    to: recipient,
+    subject: `LCarDrive contact request for ${body.instructorName}`,
+    text: [
+      `Instructor: ${body.instructorName}`,
+      `Name: ${body.name}`,
+      `Email: ${body.email}`,
+      `Phone: ${body.phone || "Not provided"}`,
+      "",
+      body.message,
+      "",
+      hasAdminNotificationEmail() && !instructor?.email
+        ? "No instructor email was available, so this was sent to the admin notification inbox."
+        : ""
+    ]
+      .filter(Boolean)
+      .join("\n")
   });
 
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
+  if (!delivery.ok) {
     return NextResponse.json(
-      { ok: false, error: data || "Resend request failed." },
+      { ok: false, error: delivery.error || "Resend request failed." },
       { status: 502 }
     );
   }
 
   return NextResponse.json({
     ok: true,
-    mode: "resend",
-    data
+    mode: delivery.mode
   });
 }

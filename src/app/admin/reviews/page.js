@@ -1,6 +1,10 @@
-import { reviewQueue } from "@/data/adminPlaceholders";
+import { getPendingReviews } from "@/lib/adminData";
 
-export default function AdminReviewsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminReviewsPage() {
+  const { data: reviewQueue, source } = await getPendingReviews();
+
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -12,7 +16,7 @@ export default function AdminReviewsPage() {
 
         <p className="mt-3 max-w-2xl text-slate-600">
           Approve or reject learner reviews before they appear publicly. These
-          buttons are placeholders only.
+          buttons are placeholders only. {source === "supabase" ? "Pending reviews are loaded from Supabase." : ""}
         </p>
       </section>
 

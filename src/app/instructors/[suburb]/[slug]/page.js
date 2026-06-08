@@ -1,12 +1,13 @@
 import Link from "next/link";
 import InstructorProfileClient from "@/components/profile/InstructorProfileClient";
-import { instructors } from "@/data/instructors";
+import {
+  getInstructorBySlug,
+  getSuburbSlug
+} from "@/lib/instructors";
 import { getProfileDescription, getProfileTitle } from "@/lib/seo/metadata";
 import { getInstructorLocalBusinessSchema } from "@/lib/seo/structuredData";
 
-function getInstructor(slug) {
-  return instructors.find((item) => item.slug === slug);
-}
+export const dynamic = "force-dynamic";
 
 function getProfileUrl(params) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -14,15 +15,8 @@ function getProfileUrl(params) {
   return `${siteUrl}/instructors/${params.suburb}/${params.slug}`;
 }
 
-export function generateStaticParams() {
-  return instructors.map((instructor) => ({
-    suburb: instructor.suburb.toLowerCase().replaceAll(" ", "-"),
-    slug: instructor.slug
-  }));
-}
-
-export function generateMetadata({ params }) {
-  const instructor = getInstructor(params.slug);
+export async function generateMetadata({ params }) {
+  const { data: instructor } = await getInstructorBySlug(params.slug);
 
   if (!instructor) {
     return {
@@ -39,8 +33,8 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function InstructorProfilePage({ params }) {
-  const instructor = getInstructor(params.slug);
+export default async function InstructorProfilePage({ params }) {
+  const { data: instructor } = await getInstructorBySlug(params.slug);
 
   if (!instructor) {
     return (

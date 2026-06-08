@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { instructors } from "@/data/instructors";
-import { pendingClaims, reviewQueue } from "@/data/adminPlaceholders";
+import { getAdminDashboardData } from "@/lib/adminData";
 import { clerkAdminRoleSetup } from "@/lib/auth/adminRole";
 
-export default function AdminHomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminHomePage() {
+  const dashboard = await getAdminDashboardData();
   const stats = [
-    { label: "Total instructors", value: instructors.length },
-    { label: "Pending claims", value: pendingClaims.length },
-    { label: "Pending reviews", value: reviewQueue.length },
-    { label: "Searches today", value: 131 }
+    { label: "Total instructors", value: dashboard.instructors.length },
+    { label: "Pending claims", value: dashboard.pendingClaims.length },
+    { label: "Pending reviews", value: dashboard.pendingReviews.length },
+    { label: "Searches today", value: dashboard.searchesToday }
   ];
 
   return (
@@ -23,8 +25,8 @@ export default function AdminHomePage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          Review listings, claims, imports, reviews, and stats. These Phase 1
-          screens use placeholder data and do not write to a database.
+          Review listings, claims, imports, reviews, and stats. Supabase-backed
+          Phase 1 data is used when configured, with placeholder fallback.
         </p>
 
         <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">

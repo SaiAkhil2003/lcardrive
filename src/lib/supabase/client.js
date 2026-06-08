@@ -14,32 +14,56 @@ export async function supabaseClientRequest(path, options = {}) {
     };
   }
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${path}`,
-    {
-      ...options,
-      headers: {
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json",
-        ...(options.headers || {})
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${path}`,
+      {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
       }
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        data: null,
+        error: data || { message: "Supabase request failed" },
+        placeholder: false
+      };
     }
-  );
 
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
     return {
-      data: null,
-      error: data || { message: "Supabase request failed" },
+      data,
+      error: null,
       placeholder: false
     };
+  } catch (error) {
+    return {
+      data: null,
+      error: { message: error?.message || "Supabase request failed" },
+      placeholder: false
+    };
+  } finally {
+    clearTimeout(timeout);
   }
+}
 
-  return {
-    data,
-    error: null,
-    placeholder: false
-  };
+export async function insertWithAnonKey(table, payload) {
+  return supabaseClientRequest(table, {
+    method: "POST",
+    headers: {
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify(payload)
+  });
 }
