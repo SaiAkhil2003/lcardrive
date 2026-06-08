@@ -26,6 +26,7 @@ async function serviceRoleRequest(table, options = {}) {
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}`,
       {
         ...options,
+        cache: "no-store",
         signal: controller.signal,
         method: options.method || "GET",
         headers: {
@@ -103,8 +104,9 @@ export async function countWithServiceRole(path) {
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${path}`,
       {
         method: "HEAD",
+        cache: "no-store",
         signal: controller.signal,
-      headers: {
+        headers: {
           apikey: serviceRoleKey,
           Authorization: `Bearer ${serviceRoleKey}`,
           Prefer: "count=exact"

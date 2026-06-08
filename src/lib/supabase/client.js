@@ -22,6 +22,7 @@ export async function supabaseClientRequest(path, options = {}) {
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${path}`,
       {
         ...options,
+        cache: "no-store",
         signal: controller.signal,
         headers: {
           apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

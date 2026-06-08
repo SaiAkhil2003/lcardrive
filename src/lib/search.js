@@ -1,6 +1,7 @@
 import { getInstructors } from "@/lib/instructors";
 import { geocodeSuburbOrPostcode } from "@/lib/googleMaps";
 import { hasCoordinates, withDistanceFromOrigin } from "@/lib/geo";
+import { insertWithServiceRole } from "@/lib/supabase/admin";
 import { insertWithAnonKey } from "@/lib/supabase/client";
 
 export const languageOptions = ["English", "Hindi", "Tamil", "Arabic", "Mandarin"];
@@ -241,7 +242,23 @@ export async function logSearch(searchParams, resultsCount) {
     results_count: resultsCount
   };
 
-  await insertWithAnonKey("search_logs", payload);
+  const result = await writeSearchLog(payload);
+
+  if (result.error) {
+    const { query, filters, ...legacyPayload } = payload;
+
+    await writeSearchLog(legacyPayload);
+  }
+}
+
+async function writeSearchLog(payload) {
+  const anonResult = await insertWithAnonKey("search_logs", payload);
+
+  if (!anonResult.placeholder && !anonResult.error) {
+    return anonResult;
+  }
+
+  return insertWithServiceRole("search_logs", payload);
 }
 
 export async function getSearchResults(searchParams) {

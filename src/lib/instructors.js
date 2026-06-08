@@ -1,5 +1,8 @@
 import { instructors as sampleInstructors } from "@/data/instructors";
 import { selectWithServiceRole } from "@/lib/supabase/admin";
+import { selectWithAnonKey } from "@/lib/supabase/server";
+
+const INSTRUCTORS_SELECT_PATH = "instructors?select=*";
 
 function toArray(value) {
   if (Array.isArray(value)) {
@@ -8,12 +11,34 @@ function toArray(value) {
 
   if (typeof value === "string") {
     return value
-      .split(",")
+      .split(/[|,]/)
       .map((item) => item.trim())
       .filter(Boolean);
   }
 
   return [];
+}
+
+function firstDefined(...values) {
+  return values.find(
+    (value) => value !== null && value !== undefined && value !== ""
+  );
+}
+
+function toBoolean(value) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    return ["true", "yes", "y", "1"].includes(value.toLowerCase().trim());
+  }
+
+  return Boolean(value);
 }
 
 function getDisplayName(row) {
@@ -70,17 +95,19 @@ export function getSuburbSlug(suburb = "") {
 
 export function normalizeInstructorRow(row, options = {}) {
   const displayName = getDisplayName(row);
-  const rating = row.rating || row.average_rating || "0";
-  const reviewCount = row.review_count || row.reviews_count || 0;
-  const licenceTypes = toArray(row.licence_types).length
-    ? toArray(row.licence_types)
+  const rating = firstDefined(row.rating, row.average_rating, "0");
+  const reviewCount = firstDefined(row.review_count, row.reviews_count, 0);
+  const licenceTypesValue = firstDefined(row.licence_types, row.licence_type);
+  const licenceTypes = toArray(licenceTypesValue).length
+    ? toArray(licenceTypesValue)
     : ["Car"];
   const languages = toArray(row.languages);
   const serviceAreas = toArray(row.service_areas);
-  const testCentres = toArray(row.familiar_test_centres);
+  const testCentres = toArray(firstDefined(row.familiar_test_centres, row.test_centres));
   const availability = toArray(row.availability_days);
-  const fiveHourPack = money(row.five_hour_pack_price, "");
-  const tenHourPack = money(row.ten_hour_pack_price, "");
+  const hourlyRate = firstDefined(row.hourly_rate, row.rate);
+  const fiveHourPack = money(firstDefined(row.five_hour_pack_price, row.package_5hr), "");
+  const tenHourPack = money(firstDefined(row.ten_hour_pack_price, row.package_10hr), "");
   const packageOptions = [
     fiveHourPack ? `5 hour pack: ${fiveHourPack}` : "",
     tenHourPack ? `10 hour pack: ${tenHourPack}` : ""
@@ -98,15 +125,17 @@ export function normalizeInstructorRow(row, options = {}) {
     gender: row.gender || "",
     licenceTypes,
     createdAt: row.created_at || new Date().toISOString(),
-    claimStatus: row.claim_status || (row.verified ? "Verified" : "Unclaimed"),
+    claimStatus: row.claim_status || (toBoolean(row.verified) ? "Verified" : "Unclaimed"),
     distance: row.distance || "Distance unavailable",
     rating: String(rating),
     reviews: String(reviewCount),
     transmission: row.transmission || "Auto",
-    verified: Boolean(row.verified),
-    anxietyFriendly: Boolean(row.anxiety_friendly),
-    internationalLicence: Boolean(row.international_licence_conversion),
-    rate: row.hourly_rate ? `${money(row.hourly_rate)}/hr` : "Contact for pricing",
+    verified: toBoolean(row.verified),
+    anxietyFriendly: toBoolean(row.anxiety_friendly),
+    internationalLicence: toBoolean(
+      firstDefined(row.international_licence_conversion, row.international_licence)
+    ),
+    rate: hourlyRate ? `${money(hourlyRate)}/hr` : "Contact for pricing",
     packagePrice: fiveHourPack ? `${fiveHourPack} for 5 hrs` : "Package pricing unavailable",
     packageOptions,
     lessonDuration: getLessonDuration(row),
@@ -123,7 +152,7 @@ export function normalizeInstructorRow(row, options = {}) {
       model: row.vehicle_model || "Not listed",
       year: row.vehicle_year ? String(row.vehicle_year) : "Not listed",
       transmission: row.vehicle_transmission || row.transmission || "Not listed",
-      dualControls: row.dual_controls ? "Yes" : "Not listed"
+      dualControls: toBoolean(row.dual_controls) ? "Yes" : "Not listed"
     },
     adiRegistration: row.adi_registration || "Not listed",
     description:
@@ -137,7 +166,7 @@ export function normalizeInstructorRow(row, options = {}) {
     },
     sampleReview: "Reviews are collected for moderation before appearing publicly.",
     passOutcome: "Review outcome not listed",
-    isSample: Boolean(row.is_sample)
+    isSample: toBoolean(row.is_sample)
   };
 
   if (options.includePrivate) {
@@ -148,10 +177,37 @@ export function normalizeInstructorRow(row, options = {}) {
   return instructor;
 }
 
+async function selectInstructorRows(path) {
+  const publicResult = await selectWithAnonKey(path);
+
+  if (
+    !publicResult.placeholder &&
+    !publicResult.error &&
+    Array.isArray(publicResult.data) &&
+    publicResult.data.length > 0
+  ) {
+    return publicResult;
+  }
+
+  const serviceResult = await selectWithServiceRole(path);
+
+  if (!serviceResult.placeholder && !serviceResult.error && Array.isArray(serviceResult.data)) {
+    return serviceResult;
+  }
+
+  if (!publicResult.placeholder && !publicResult.error && Array.isArray(publicResult.data)) {
+    return publicResult;
+  }
+
+  return {
+    data: null,
+    error: publicResult.error || serviceResult.error,
+    placeholder: publicResult.placeholder && serviceResult.placeholder
+  };
+}
+
 export async function getInstructors(options = {}) {
-  const result = await selectWithServiceRole(
-    "instructors?select=*&order=created_at.desc"
-  );
+  const result = await selectInstructorRows(INSTRUCTORS_SELECT_PATH);
 
   if (result.placeholder || result.error || !Array.isArray(result.data)) {
     return {
@@ -177,7 +233,7 @@ export async function getInstructors(options = {}) {
 }
 
 export async function getInstructorBySlug(slug, options = {}) {
-  const result = await selectWithServiceRole(
+  const result = await selectInstructorRows(
     `instructors?slug=eq.${encodeURIComponent(slug)}&select=*&limit=1`
   );
 
