@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth/roles";
+import { getAdminInstructors } from "@/lib/adminData";
 import { updateWithServiceRole } from "@/lib/supabase/admin";
 
 function getRateNumber(rate) {
@@ -54,6 +55,22 @@ async function requireAdmin() {
   }
 
   return { ok: true };
+}
+
+export async function GET() {
+  const admin = await requireAdmin();
+
+  if (!admin.ok) {
+    return admin.response;
+  }
+
+  const result = await getAdminInstructors();
+
+  return NextResponse.json({
+    ok: true,
+    source: result.source,
+    listings: result.data
+  });
 }
 
 export async function PATCH(request) {

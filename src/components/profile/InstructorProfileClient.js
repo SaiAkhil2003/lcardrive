@@ -347,6 +347,10 @@ export default function InstructorProfileClient({ instructor }) {
               Instructor Portal
             </Link>
 
+            <Link href="/learner/dashboard" className="hover:text-blue-700">
+              Learner Dashboard
+            </Link>
+
             <Link href="/admin" className="hover:text-blue-700">
               Admin
             </Link>
@@ -419,6 +423,13 @@ export default function InstructorProfileClient({ instructor }) {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/book/${instructor.slug}`}
+                className="rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
+              >
+                Book Lesson
+              </Link>
+
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
@@ -501,7 +512,8 @@ export default function InstructorProfileClient({ instructor }) {
               </div>
 
               <p className="mt-3 text-sm text-slate-500">
-                Availability is self-reported and not a live booking calendar.
+                Availability is self-reported and used to generate pending
+                booking request slots.
               </p>
             </section>
 
@@ -627,6 +639,13 @@ export default function InstructorProfileClient({ instructor }) {
                 Contact Instructor
               </button>
 
+              <Link
+                href={`/book/${instructor.slug}`}
+                className="mt-3 block w-full rounded-xl bg-slate-900 px-5 py-3 text-center font-semibold text-white hover:bg-slate-800"
+              >
+                Book Lesson
+              </Link>
+
               {!isUnclaimed && (
                 <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
                   Claim status: {instructor.claimStatus}
@@ -649,8 +668,8 @@ export default function InstructorProfileClient({ instructor }) {
               </button>
 
               <p className="mt-5 text-sm text-slate-500">
-                This is a Phase 1 listing for instructor discovery and profile
-                claims.
+                Booking requests remain pending until accepted by the instructor
+                or admin.
               </p>
             </section>
 

@@ -37,13 +37,24 @@ Required production variables:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GOOGLE_MAPS_API_KEY`
+- `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` if client-side Places autocomplete is added
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `ANTHROPIC_API_KEY`
 - `ADMIN_NOTIFICATION_EMAIL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_CONNECT_CLIENT_ID`
+- `PLATFORM_COMMISSION_PERCENT=15`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER`
 
 `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` is only needed if client-side Places
 autocomplete is added later; restrict it to the production domain before use.
+Stripe and Twilio variables can remain blank until payments and SMS reminders
+are explicitly approved for production.
 
 ## Clerk And Google OAuth
 
@@ -70,6 +81,7 @@ Run the migrations in `supabase/migrations` in order:
 4. `004_create_search_logs_table.sql`
 5. `005_rls_policies.sql`
 6. `006_phase1_production_readiness_columns.sql`
+7. `007_phase2_platform_tables.sql`
 
 Seed data starts at `supabase/seed/sample-instructors.csv` for local demos. The
 checked-in instructor rows are sample placeholders and are clearly marked as
@@ -90,6 +102,23 @@ Real import rows should include:
 
 Do not seed fake production instructors. Replace sample rows only after the real
 data source and business review are complete.
+
+## Phase 2 Platform
+
+Phase 2 adds a safe MVP foundation for:
+
+- Pending lesson booking requests at `/book/[instructorSlug]`
+- Learner dashboard, booking history, favourites, and logbook
+- Instructor portal booking review, availability, and subscription readiness
+- Admin bookings, payments, and analytics dashboards
+- Stripe Connect checkout/onboarding server routes that stay disabled when
+  test-mode Stripe variables are missing or a live key is detected
+- Optional advanced AI routes that use Anthropic only from server-side code
+- Future-ready SMS reminder environment variables with no SMS sending enabled
+
+Production payments still require Stripe Connect legal review, identity and
+payout verification, refunds/disputes handling, and explicit approval before
+real charges are enabled.
 
 ## Vercel Deployment
 
@@ -162,11 +191,17 @@ Current Phase 1 fallback behavior:
 - CSV import preview does not parse real CSV unless a parser is added later.
 - Google Maps geocoding and radius search run server-side when
   `GOOGLE_MAPS_API_KEY` and instructor coordinates are available.
+- Browser Places autocomplete must use `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`
+  only after domain restrictions are configured.
 - Contact form submissions return safe local success without Resend delivery
   keys.
 - AI matching and bio writing return local fallbacks without `ANTHROPIC_API_KEY`.
 - AI routes include a process-local rate-limit placeholder. Use a durable rate
   limiter before high-traffic production use.
+- Booking, favourites, logbook, subscription, featured listing, and payment
+  APIs require Clerk auth and use server-side Supabase service-role requests.
+- Payment APIs return disabled responses until Stripe test variables are
+  present; live secret keys are blocked in code pending business setup.
 
 ## Phase 1 Scope
 
@@ -199,3 +234,14 @@ Out of scope for Phase 1:
 - AI natural language search
 - AI pricing intelligence
 - Listing report or flag queues
+
+## Phase 2 External Blockers
+
+The codebase now contains MVP surfaces and server routes, but production launch
+for these areas remains blocked until the relevant external setup is complete:
+
+- Real 80 to 120 instructor records imported from an approved source
+- Stripe Connect account onboarding, payout verification, and webhook setup
+- Durable rate limiting for high-traffic AI endpoints
+- Twilio approval and SMS compliance review before reminders are sent
+- Clerk role metadata for admin and approved instructor ownership

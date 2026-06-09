@@ -20,6 +20,14 @@ const links = [
   {
     href: "/portal/service-areas",
     label: "Service Areas"
+  },
+  {
+    href: "/portal/bookings",
+    label: "Bookings"
+  },
+  {
+    href: "/portal/subscription",
+    label: "Subscription"
   }
 ];
 

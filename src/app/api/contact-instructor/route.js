@@ -5,6 +5,7 @@ import {
   hasResendConfig,
   sendEmail
 } from "@/lib/resend";
+import { recordPlatformEvent } from "@/lib/platformData";
 
 function hasRequiredContactFields(body) {
   return Boolean(body?.name && body?.email && body?.message && body?.instructorId);
@@ -24,6 +25,16 @@ export async function POST(request) {
     includePrivate: true
   });
   const recipient = instructor?.email || process.env.ADMIN_NOTIFICATION_EMAIL || process.env.RESEND_CONTACT_TO_EMAIL;
+
+  await recordPlatformEvent({
+    eventType: "contact_instructor",
+    entityType: "instructor",
+    entityId: body.instructorId,
+    metadata: {
+      hasInstructorEmail: Boolean(instructor?.email),
+      suburb: instructor?.suburb || ""
+    }
+  });
 
   if (!hasResendConfig() || !recipient) {
     return NextResponse.json({

@@ -3,11 +3,20 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth/roles";
 
 const isPortalRoute = createRouteMatcher(["/portal(.*)"]);
+const isLearnerRoute = createRouteMatcher(["/learner(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminApiRoute = createRouteMatcher(["/api/admin(.*)"]);
 const isAuthenticatedApiRoute = createRouteMatcher([
   "/api/ai/bio",
-  "/api/claims"
+  "/api/ai/pricing-suggestion",
+  "/api/bookings(.*)",
+  "/api/claims",
+  "/api/favourites",
+  "/api/featured-listings",
+  "/api/instructor/stripe/onboard",
+  "/api/logbook",
+  "/api/payments/create-checkout-session",
+  "/api/subscriptions"
 ]);
 
 function hasClerkServerConfig() {
@@ -68,7 +77,7 @@ const protectedRoutesMiddleware = clerkMiddleware(async (auth, request) => {
     return NextResponse.next();
   }
 
-  if (isPortalRoute(request)) {
+  if (isPortalRoute(request) || isLearnerRoute(request)) {
     const authObject = await auth();
 
     if (!authObject.userId) {
@@ -91,10 +100,21 @@ export const config = {
   matcher: [
     "/portal",
     "/portal/:path*",
+    "/learner",
+    "/learner/:path*",
     "/admin",
     "/admin/:path*",
     "/api/admin/:path*",
     "/api/ai/bio",
+    "/api/ai/pricing-suggestion",
+    "/api/bookings/:path*",
+    "/api/bookings",
     "/api/claims",
+    "/api/favourites",
+    "/api/featured-listings",
+    "/api/instructor/stripe/onboard",
+    "/api/logbook",
+    "/api/payments/create-checkout-session",
+    "/api/subscriptions"
   ]
 };

@@ -3,6 +3,7 @@ import { selectWithServiceRole } from "@/lib/supabase/admin";
 import { selectWithAnonKey } from "@/lib/supabase/server";
 
 const INSTRUCTORS_SELECT_PATH = "instructors?select=*";
+const requiredInstructorFields = ["id", "slug", "suburb"];
 
 function toArray(value) {
   if (Array.isArray(value)) {
@@ -23,6 +24,10 @@ function firstDefined(...values) {
   return values.find(
     (value) => value !== null && value !== undefined && value !== ""
   );
+}
+
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
 }
 
 function toBoolean(value) {
@@ -48,6 +53,22 @@ function getDisplayName(row) {
     [row.first_name, row.last_name].filter(Boolean).join(" ") ||
     "Unnamed instructor"
   );
+}
+
+function isValidInstructorRow(row) {
+  if (!row || typeof row !== "object") {
+    return false;
+  }
+
+  const hasRequiredFields = requiredInstructorFields.every((field) =>
+    hasValue(row[field])
+  );
+
+  return hasRequiredFields && hasValue(getDisplayName(row));
+}
+
+function getValidInstructorRows(data) {
+  return Array.isArray(data) ? data.filter(isValidInstructorRow) : [];
 }
 
 function getLastInitial(row, displayName) {
@@ -117,7 +138,9 @@ export function normalizeInstructorRow(row, options = {}) {
     id: row.id,
     slug: row.slug,
     firstName: row.first_name || displayName.split(" ")[0] || displayName,
+    lastName: row.last_name || "",
     lastInitial: getLastInitial(row, displayName),
+    displayName,
     name: displayName,
     suburb: row.suburb,
     postcode: row.postcode || "",
@@ -125,6 +148,7 @@ export function normalizeInstructorRow(row, options = {}) {
     gender: row.gender || "",
     licenceTypes,
     createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
     claimStatus: row.claim_status || (toBoolean(row.verified) ? "Verified" : "Unclaimed"),
     distance: row.distance || "Distance unavailable",
     rating: String(rating),
@@ -147,6 +171,10 @@ export function normalizeInstructorRow(row, options = {}) {
     latitude: row.latitude === null || row.latitude === undefined ? null : Number(row.latitude),
     longitude: row.longitude === null || row.longitude === undefined ? null : Number(row.longitude),
     profilePhotoUrl: row.profile_photo_url || "",
+    facebookUrl: row.facebook_url || "",
+    googleBusinessUrl: row.google_business_url || "",
+    googlePlaceId: row.google_place_id || "",
+    sourceNotes: row.source_notes || "",
     vehicle: {
       make: row.vehicle_make || "Not listed",
       model: row.vehicle_model || "Not listed",
@@ -179,24 +207,41 @@ export function normalizeInstructorRow(row, options = {}) {
 
 async function selectInstructorRows(path) {
   const publicResult = await selectWithAnonKey(path);
+  const publicRows = getValidInstructorRows(publicResult.data);
 
   if (
     !publicResult.placeholder &&
     !publicResult.error &&
-    Array.isArray(publicResult.data) &&
-    publicResult.data.length > 0
+    publicRows.length > 0
   ) {
-    return publicResult;
+    return {
+      ...publicResult,
+      data: publicRows
+    };
   }
 
   const serviceResult = await selectWithServiceRole(path);
+  const serviceRows = getValidInstructorRows(serviceResult.data);
 
-  if (!serviceResult.placeholder && !serviceResult.error && Array.isArray(serviceResult.data)) {
-    return serviceResult;
+  if (!serviceResult.placeholder && !serviceResult.error && serviceRows.length > 0) {
+    return {
+      ...serviceResult,
+      data: serviceRows
+    };
   }
 
   if (!publicResult.placeholder && !publicResult.error && Array.isArray(publicResult.data)) {
-    return publicResult;
+    return {
+      ...publicResult,
+      data: publicRows
+    };
+  }
+
+  if (!serviceResult.placeholder && !serviceResult.error && Array.isArray(serviceResult.data)) {
+    return {
+      ...serviceResult,
+      data: serviceRows
+    };
   }
 
   return {

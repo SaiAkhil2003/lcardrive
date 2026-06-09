@@ -66,6 +66,10 @@ export default function Home() {
               Instructor Portal
             </Link>
 
+            <Link href="/learner/dashboard" className="hover:text-blue-700">
+              Learner Dashboard
+            </Link>
+
             <Link href="/admin" className="hover:text-blue-700">
               Admin
             </Link>
@@ -170,7 +174,7 @@ export default function Home() {
 
           <div className="rounded-3xl bg-white p-8 shadow-sm">
             <h2 className="mb-6 text-2xl font-bold">
-              Phase 1 Platform Focus
+              LCarDrive Platform
             </h2>
 
             <div className="space-y-4">
@@ -204,6 +208,17 @@ export default function Home() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Admin can import listings, approve claims, moderate reviews,
                   and monitor platform activity.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border p-5">
+                <h3 className="font-semibold">
+                  Booking And Learner Tools
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Learners can request lessons, save favourites, and track logbook
+                  hours while payment features stay disabled until configured.
                 </p>
               </div>
             </div>

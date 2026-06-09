@@ -55,12 +55,32 @@ export default async function AdminHomePage() {
         </Link>
 
         <Link
+          href="/admin/bookings"
+          className="rounded-2xl border bg-white p-5 shadow-sm hover:border-blue-600"
+        >
+          <h2 className="text-xl font-bold">Bookings</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Review lesson requests, status changes, and payment readiness.
+          </p>
+        </Link>
+
+        <Link
           href="/admin/claims"
           className="rounded-2xl border bg-white p-5 shadow-sm hover:border-blue-600"
         >
           <h2 className="text-xl font-bold">Claims queue</h2>
           <p className="mt-2 text-sm text-slate-600">
             Approve or reject submitted ADI registration numbers later.
+          </p>
+        </Link>
+
+        <Link
+          href="/admin/analytics"
+          className="rounded-2xl border bg-white p-5 shadow-sm hover:border-blue-600"
+        >
+          <h2 className="text-xl font-bold">Analytics</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            View privacy-safe search, booking, claim, and review metrics.
           </p>
         </Link>
       </section>

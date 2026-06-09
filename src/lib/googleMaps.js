@@ -20,6 +20,7 @@ export async function geocodeSuburbOrPostcode(query) {
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`,
       {
+        cache: "no-store",
         signal: controller.signal
       }
     );

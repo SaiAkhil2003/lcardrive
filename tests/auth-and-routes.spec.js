@@ -5,6 +5,7 @@ const publicRoutes = [
   "/search",
   "/find-my-instructor",
   "/instructors/footscray/sarah-m-footscray",
+  "/book/sarah-m-footscray",
   "/sitemap.xml",
   "/robots.txt"
 ];
@@ -97,6 +98,19 @@ test.describe("protected routes while signed out", () => {
 
     await expect(body).toContainText(/sign in|forbidden|admin role/i);
   });
+
+  test("/learner/dashboard redirects to sign-in or shows setup notice", async ({ page }) => {
+    await page.goto("/learner/dashboard");
+
+    const body = page.locator("body");
+
+    if (page.url().includes("/sign-in")) {
+      await expect(body).toContainText(/sign in/i);
+      return;
+    }
+
+    await expect(body).toContainText(/sign in|clerk setup required|learner dashboard/i);
+  });
 });
 
 test.describe("claim route", () => {
@@ -169,5 +183,86 @@ test.describe("API fallback routes", () => {
     });
 
     expect([200, 401]).toContain(response.status());
+  });
+
+  test("/api/bookings requires auth while signed out", async ({ request }) => {
+    const response = await request.post("/api/bookings", {
+      data: {
+        instructorSlug: "sarah-m-footscray",
+        lessonType: "standard",
+        scheduledStart: new Date(Date.now() + 86400000).toISOString(),
+        learnerName: "Test Learner",
+        learnerEmail: "learner@example.com"
+      }
+    });
+
+    expect(response.status()).toBe(401);
+  });
+
+  test("/api/favourites requires auth while signed out", async ({ request }) => {
+    const response = await request.post("/api/favourites", {
+      data: {
+        instructorSlug: "sarah-m-footscray"
+      }
+    });
+
+    expect(response.status()).toBe(401);
+  });
+
+  test("/api/logbook requires auth while signed out", async ({ request }) => {
+    const response = await request.post("/api/logbook", {
+      data: {
+        date: "2026-06-09",
+        durationMinutes: 60,
+        instructor: "Sarah M.",
+        suburb: "Footscray",
+        skillsPracticed: "parking"
+      }
+    });
+
+    expect(response.status()).toBe(401);
+  });
+
+  test("/api/admin/analytics rejects signed-out users", async ({ request }) => {
+    const response = await request.get("/api/admin/analytics");
+
+    expect([401, 403]).toContain(response.status());
+  });
+
+  test("/api/payments/create-checkout-session safely rejects or disables while signed out", async ({ request }) => {
+    const response = await request.post("/api/payments/create-checkout-session", {
+      data: {
+        bookingId: "00000000-0000-0000-0000-000000000000"
+      }
+    });
+
+    expect([200, 401]).toContain(response.status());
+
+    if (response.status() === 200) {
+      const data = await response.json();
+      expect(data.mode).toBe("disabled");
+    }
+  });
+
+  test("/api/ai/advanced-search returns fallback recommendations", async ({ request }) => {
+    const response = await request.post("/api/ai/advanced-search", {
+      data: {
+        query: "patient automatic instructor near Footscray for a nervous learner"
+      }
+    });
+
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(Array.isArray(data.results)).toBeTruthy();
+  });
+
+  test("/api/ai/pricing-suggestion returns auth-required safe status", async ({ request }) => {
+    const response = await request.post("/api/ai/pricing-suggestion", {
+      data: {
+        instructorSlug: "sarah-m-footscray"
+      }
+    });
+
+    expect(response.status()).toBe(401);
   });
 });

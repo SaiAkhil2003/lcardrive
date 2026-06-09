@@ -137,3 +137,12 @@ export async function countWithServiceRole(path) {
     clearTimeout(timeout);
   }
 }
+
+export async function deleteWithServiceRole(path) {
+  return serviceRoleRequest(path, {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=representation"
+    }
+  });
+}

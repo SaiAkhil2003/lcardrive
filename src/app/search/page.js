@@ -61,6 +61,10 @@ export default async function SearchPage({ searchParams }) {
               Instructor Portal
             </Link>
 
+            <Link href="/learner/dashboard" className="hover:text-blue-700">
+              Learner Dashboard
+            </Link>
+
             <Link href="/admin" className="hover:text-blue-700">
               Admin
             </Link>
@@ -376,6 +380,10 @@ export default async function SearchPage({ searchParams }) {
                       <p className="mt-1 text-sm text-slate-600">
                         {instructor.packagePrice}
                       </p>
+
+                      <span className="mt-3 inline-block rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+                        View and book
+                      </span>
                     </div>
                   </Link>
                 ))}

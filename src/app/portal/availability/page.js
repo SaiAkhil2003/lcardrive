@@ -1,18 +1,18 @@
+import { auth } from "@clerk/nextjs/server";
 import ProfileCompletenessBar from "@/components/portal/ProfileCompletenessBar";
-import { instructors } from "@/data/instructors";
+import AvailabilityEditor from "@/components/portal/AvailabilityEditor";
+import { getClaimedInstructorSlugsForUser } from "@/lib/auth/ownership";
+import { getAvailabilityRecords } from "@/lib/platformData";
 
-const days = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday"
-];
+export const dynamic = "force-dynamic";
 
-export default function PortalAvailabilityPage() {
-  const instructor = instructors[0];
+export default async function PortalAvailabilityPage() {
+  const authObject = await auth().catch(() => ({ userId: null }));
+  const ownership = authObject.userId
+    ? await getClaimedInstructorSlugsForUser(authObject.userId)
+    : { data: [], source: "signed-out" };
+  const instructorSlug = ownership.data[0] || "sarah-m-footscray";
+  const availability = await getAvailabilityRecords(instructorSlug);
 
   return (
     <div className="space-y-6">
@@ -24,34 +24,20 @@ export default function PortalAvailabilityPage() {
         <h1 className="mt-2 text-3xl font-bold">Weekly availability</h1>
 
         <p className="mt-3 max-w-2xl text-slate-600">
-          This is self-reported availability, not a live booking calendar.
+          Weekly recurring availability powers public booking slot generation.
         </p>
+        {ownership.data.length === 0 && (
+          <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+            Approved claim ownership is required before availability can be
+            persisted. Showing sample availability for Sarah M.
+          </p>
+        )}
       </section>
 
       <ProfileCompletenessBar value={82} />
 
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2">
-          {days.map((day) => (
-            <label
-              key={day}
-              className="flex items-center justify-between rounded-xl border p-4"
-            >
-              <span className="font-semibold">{day}</span>
-              <input
-                type="checkbox"
-                defaultChecked={instructor.availability.includes(day)}
-              />
-            </label>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-        >
-          Save availability placeholder
-        </button>
+        <AvailabilityEditor instructorSlug={instructorSlug} records={availability.data} />
       </section>
     </div>
   );
